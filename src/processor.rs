@@ -21,4 +21,5 @@ pub struct Processor {
     flags: FlagRegisters,
     program_counter: usize,
     runtime_counter: usize,
+    breakpoints: [bool; ROM_SIZE],
 }

@@ -34,11 +34,24 @@ pub enum ControlFlowInstruction {
     JumpNotCarry(u16),
 }
 
+#[allow(unused)]
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub enum DebugInstruction {
+    SetRegister(u8, u16),
+    SetFlagZero(bool),
+    SetFlagSign(bool),
+    SetFlagCarry(bool),
+    SetMemory(u16, u16),
+    Breakpoint(u16),
+    Halt,
+}
+
 #[derive(Clone, Copy, Debug, Default, PartialEq)]
 pub enum Instruction {
     ALU(ALUInstruction),
     Memory(MemoryInstruction),
     ControlFlow(ControlFlowInstruction),
+    Debug(DebugInstruction),
     #[default]
     NoOperation,
 }
@@ -53,6 +66,9 @@ macro_rules! op {
     };
     (cnt $n:ident $($r:literal),*) => {
         crate::instructions::Instruction::ControlFlow(crate::instructions::ControlFlowInstruction::$n($($r),*))
+    };
+    (dbg $n:ident $($r:literal),*) => {
+        crate::instructions::Instruction::Debug(crate::instructions::DebugInstruction::$n($($r),*))
     };
     (nop) => {
         crate::instructions::Instruction::NoOperation
@@ -117,6 +133,28 @@ macro_rules! op {
     (jmpnc $a:literal) => {
         op![cnt JumpNotCarry $a]
     };
+    (sreg $r:literal, $v:literal) => {
+        op![dbg SetRegister $r, $v]
+    };
+    (sfz $v:literal) => {
+        op![dbg SetFlagZero $v]
+    };
+    (sfs $v:literal) => {
+        op![dbg SetFlagSign $v]
+    };
+    (sfc $v:literal) => {
+        op![dbg SetFlagCarry $v]
+    };
+    (smem $a:literal, $v:literal) => {
+        op![dbg SetMemory $a, $v]
+    };
+    (brk $a:literal) => {
+        op![dbg Breakpoint $a]
+    };
+    (halt) => {
+        crate::instructions::Instruction::Debug(crate::instructions::DebugInstruction::Halt)
+    };
+}
 
 #[macro_export]
 macro_rules! asm {

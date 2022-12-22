@@ -1,6 +1,8 @@
 use super::{FlagRegisters, Processor, RAM_SIZE, REG_COUNT, ROM_SIZE};
 use crate::error::EmulationError;
-use crate::instructions::{ALUInstruction, ControlFlowInstruction, Instruction, MemoryInstruction};
+use crate::instructions::{
+    ALUInstruction, ControlFlowInstruction, DebugInstruction, Instruction, MemoryInstruction,
+};
 
 impl std::fmt::Display for Processor {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -85,12 +87,14 @@ impl Processor {
             Instruction::ALU(op) => self.execute_alu(op),
             Instruction::Memory(op) => self.execute_memory(op),
             Instruction::ControlFlow(op) => self.execute_control_flow(op),
+            Instruction::Debug(op) => self.execute_debug(op),
             Instruction::NoOperation => {}
         }
         self.runtime_counter += 1;
     }
 
     #[allow(dead_code)]
+    pub fn run(&mut self, breakpoints: bool) {
         let end = if let Instruction::NoOperation = self.rom[self.last_instruction_address()] {
             self.last_instruction_address() - 1
         } else {
@@ -102,17 +106,30 @@ impl Processor {
                 eprintln!("Stack overflow!");
                 break;
             };
+            if breakpoints && self.breakpoints[self.program_counter] {
+                break;
+            }
         }
     }
 
-    pub fn tick_op(&mut self, op: Instruction) {
-        match op {
-            Instruction::ALU(op) => self.execute_alu(op),
-            Instruction::Memory(op) => self.execute_memory(op),
-            Instruction::ControlFlow(op) => self.execute_control_flow(op),
-            Instruction::NoOperation => {}
+    #[allow(dead_code)]
+    pub fn toggle_breakpoint(&mut self, line: usize) -> bool {
+        if line > self.rom.len() {
+            false
+        } else {
+            self.breakpoints[line] = !self.breakpoints[line];
+            self.breakpoints[line]
         }
-        self.runtime_counter += 1;
+    }
+
+    #[allow(dead_code)]
+    pub fn program_counter_jump(&mut self, line: usize) -> bool {
+        if line > self.rom.len() {
+            false
+        } else {
+            self.program_counter = line;
+            true
+        }
     }
 
     fn execute_alu(&mut self, op: ALUInstruction) {
@@ -250,6 +267,39 @@ impl Processor {
         self.flags.unset();
     }
 
+    fn execute_debug(&mut self, op: DebugInstruction) {
+        macro_rules! reg {
+            ($i:ident) => {
+                self.registers[$i as usize]
+            };
+        }
+        macro_rules! mem {
+            ($i:expr) => {
+                self.ram[$i as usize]
+            };
+        }
+        self.flags.unset();
+        match op {
+            DebugInstruction::SetRegister(z, v) => {
+                reg![z] = v;
+            }
+            DebugInstruction::SetFlagZero(v) => {
+                self.flags.zero = v;
+            }
+            DebugInstruction::SetFlagSign(v) => {
+                self.flags.sign = v;
+            }
+            DebugInstruction::SetFlagCarry(v) => {
+                self.flags.carry = v;
+            }
+            DebugInstruction::SetMemory(addr, v) => {
+                mem![addr] = v;
+            }
+            DebugInstruction::Breakpoint(addr) => self.breakpoints[addr as usize] = true,
+            DebugInstruction::Halt => self.program_counter = ROM_SIZE,
+        }
+    }
+
     fn last_instruction_address(&self) -> usize {
         self.rom.len()
             - self
@@ -311,6 +361,7 @@ impl Processor {
         }
         Ok(())
     }
+
     fn print_rom(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         writeln!(f, "Program memory")?;
         for i in 0..self.last_instruction_address() {
@@ -318,7 +369,12 @@ impl Processor {
             if self.program_counter == i {
                 write!(f, " <=")?;
             }
+            if self.breakpoints[i] {
+                writeln!(f, " (*)")?;
+            } else {
                 writeln!(f, "")?;
+            }
+        }
         if self.last_instruction_address() < self.rom.len() {
             write!(f, "| ··· | nop")?;
             if self.program_counter >= self.last_instruction_address() {

@@ -1,5 +1,7 @@
 use crate::instructions::{ALUInstruction, ControlFlowInstruction, Instruction, MemoryInstruction};
 
+use super::DebugInstruction;
+
 impl std::fmt::Display for Instruction {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match *self {
@@ -29,6 +31,15 @@ impl std::fmt::Display for Instruction {
                 ControlFlowInstruction::JumpNotZero(a) => write!(f, "jmpnz {}", a),
                 ControlFlowInstruction::JumpNotSign(a) => write!(f, "jmpns {}", a),
                 ControlFlowInstruction::JumpNotCarry(a) => write!(f, "jmpnc {}", a),
+            },
+            Self::Debug(op) => match op {
+                DebugInstruction::SetRegister(r, v) => write!(f, "sreg  R{}, {}", r, v),
+                DebugInstruction::SetFlagZero(v) => write!(f, "sfz   {}", v),
+                DebugInstruction::SetFlagSign(v) => write!(f, "sfs   {}", v),
+                DebugInstruction::SetFlagCarry(v) => write!(f, "sfc   {}", v),
+                DebugInstruction::SetMemory(a, v) => write!(f, "smem  {}, {}", a, v),
+                DebugInstruction::Breakpoint(a) => write!(f, "brk   {}", a),
+                DebugInstruction::Halt => write!(f, "halt"),
             },
             Self::NoOperation => write!(f, "nop"),
         }

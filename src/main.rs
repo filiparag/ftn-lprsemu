@@ -1,9 +1,8 @@
 #![feature(unchecked_math)]
 
-use processor::Processor;
+mod asm;
 mod error;
 mod instructions;
 mod processor;
 
-fn main() {
-}
+fn main() {}
