@@ -2,7 +2,7 @@ use crate::instructions::{ALUInstruction, ControlFlowInstruction, Instruction, M
 
 impl std::fmt::Display for Instruction {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
+        match *self {
             Self::ALU(op) => match op {
                 ALUInstruction::Move(z, x) => write!(f, "mov   R{}, R{}", z, x),
                 ALUInstruction::Add(z, x, y) => write!(f, "add   R{}, R{}, R{}", z, x, y),

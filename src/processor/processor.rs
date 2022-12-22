@@ -1,79 +1,48 @@
-use super::{FlagRegisters, Processor};
+use super::{FlagRegisters, Processor, RAM_SIZE, REG_COUNT, ROM_SIZE};
 use crate::error::EmulationError;
 use crate::instructions::{ALUInstruction, ControlFlowInstruction, Instruction, MemoryInstruction};
 
 impl std::fmt::Display for Processor {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        writeln!(f, "Registers")?;
-        for i in 0..self.registers.len() {
-            write!(f, "\t|    R{}", i)?;
-        }
-        writeln!(f, "")?;
-        for i in 0..self.registers.len() {
-            write!(f, "\t| {:#5}", self.registers[i] as i16)?;
-        }
-        writeln!(f, "")?;
-        writeln!(f, "Flags")?;
-        writeln!(f, "\tzero: {}", self.flags.zero)?;
-        writeln!(f, "\tsign: {}", self.flags.sign)?;
-        writeln!(f, "\tcarry: {}", self.flags.carry)?;
-        writeln!(f, "Data memory")?;
-        let ram_max = self.ram.len()
-            - self
-                .ram
-                .iter()
-                .rev()
-                .map_while(|&i| if i == 0 { Some(()) } else { None })
-                .count();
-        for i in 0..ram_max {
-            writeln!(f, "\t| {:#3} | {:#5}", i, self.ram[i] as i16)?;
-        }
-        if ram_max == 0 {
-            writeln!(f, "\t<empty>")?;
-        } else if ram_max < self.ram.len() {
-            writeln!(f, "\t| ... | {:#5}", 0)?;
-        }
-        writeln!(f, "Program memory")?;
-        for i in 0..self.last_instruction_address() {
-            writeln!(f, "\t| {:#3} | {}", i, self.rom[i])?;
-        }
-        if ram_max == 0 {
-            writeln!(f, "\t<empty>")?;
-        } else if ram_max < self.ram.len() {
-            writeln!(f, "\t| ... | nop")?;
-        }
-        writeln!(f, "Program counter:")?;
-        writeln!(f, "\t{}", self.program_counter)?;
-        writeln!(f, "Runtime counter:")?;
-        writeln!(f, "\t{} ticks", self.runtime_counter)?;
+        self.print_registers(f)?;
+        self.print_flags(f)?;
+        writeln!(f, "Program counter: {}", self.program_counter)?;
+        writeln!(f, "Runtime counter: {}", self.runtime_counter)?;
+        self.print_ram(f)?;
+        self.print_rom(f)?;
         Ok(())
     }
 }
 
 impl Processor {
+    #[allow(dead_code)]
     pub fn new() -> Self {
         Processor {
-            rom: [Instruction::default(); 256],
-            ram: [0; 256],
-            registers: [0; 8],
+            rom: [Instruction::default(); ROM_SIZE],
+            ram: [0; RAM_SIZE],
+            registers: [0; REG_COUNT],
             flags: FlagRegisters::default(),
             program_counter: 0,
             runtime_counter: 0,
+            breakpoints: [false; ROM_SIZE],
         }
     }
 
+    #[allow(dead_code)]
     pub fn load_rom(&mut self, instructions: &[Instruction]) -> &mut Self {
         self.clear_rom();
         self.rom[0..instructions.len()].copy_from_slice(instructions);
         self
     }
 
-    fn clear_rom(&mut self) {
+    #[allow(dead_code)]
+    pub fn clear_rom(&mut self) {
         self.rom
             .iter_mut()
             .for_each(|op| *op = Instruction::NoOperation);
     }
 
+    #[allow(dead_code)]
     pub fn load_rom_str(&mut self, instructions: &[&str]) -> Result<&mut Self, EmulationError> {
         for i in 0..instructions.len() {
             self.rom[i] = instructions[i].parse()?;
@@ -81,6 +50,7 @@ impl Processor {
         Ok(self)
     }
 
+    #[allow(dead_code)]
     pub fn load_ram(&mut self, data: &[u16]) -> &mut Self {
         self.clear_ram();
         self.ram[0..data.len()].copy_from_slice(data);
@@ -91,18 +61,43 @@ impl Processor {
         self.ram.iter_mut().for_each(|cell| *cell = 0);
     }
 
+    #[allow(dead_code)]
     pub fn tick(&mut self) -> bool {
-        self.tick_op(self.rom[self.program_counter]);
-        if self.program_counter < 255 {
-            self.program_counter += 1;
-            true
+        if self.program_counter >= ROM_SIZE {
+            return false;
+        }
+        let current_counter = self.program_counter;
+        self.tick_op(self.rom[current_counter]);
+        if self.program_counter == current_counter {
+            if self.program_counter < ROM_SIZE - 1 {
+                self.program_counter += 1;
+                true
+            } else {
+                false
+            }
         } else {
-            false
+            current_counter < ROM_SIZE - 1
         }
     }
 
-    pub fn run(&mut self) {
-        for _ in 0..self.last_instruction_address() {
+    fn tick_op(&mut self, op: Instruction) {
+        match op {
+            Instruction::ALU(op) => self.execute_alu(op),
+            Instruction::Memory(op) => self.execute_memory(op),
+            Instruction::ControlFlow(op) => self.execute_control_flow(op),
+            Instruction::NoOperation => {}
+        }
+        self.runtime_counter += 1;
+    }
+
+    #[allow(dead_code)]
+        let end = if let Instruction::NoOperation = self.rom[self.last_instruction_address()] {
+            self.last_instruction_address() - 1
+        } else {
+            self.last_instruction_address()
+        };
+
+        while self.program_counter <= end {
             if !self.tick() {
                 eprintln!("Stack overflow!");
                 break;
@@ -269,5 +264,69 @@ impl Processor {
                     }
                 })
                 .count()
+    }
+
+    fn print_registers(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        writeln!(f, "Registers")?;
+        for i in 0..self.registers.len() {
+            write!(f, "|     R{} ", i)?;
+        }
+        writeln!(f, "")?;
+        for i in 0..self.registers.len() {
+            write!(f, "| {:#6} ", self.registers[i] as i16)?;
+        }
+        writeln!(f, "")?;
+        Ok(())
+    }
+
+    fn print_flags(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "Flags    ")?;
+        write!(
+            f,
+            "[ zero: {:#5} ]   [ sign: {:#5} ]   [ carry: {:#5} ]",
+            self.flags.zero, self.flags.sign, self.flags.carry
+        )?;
+        writeln!(f, "")?;
+        Ok(())
+    }
+
+    fn print_ram(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        writeln!(f, "Data memory")?;
+        let ram_max = self.ram.len()
+            - self
+                .ram
+                .iter()
+                .rev()
+                .map_while(|&i| if i == 0 { Some(()) } else { None })
+                .count();
+        for i in 0..ram_max {
+            writeln!(
+                f,
+                "| {:#3} | {:#5} | 0x{:016b}",
+                i, self.ram[i] as i16, self.ram[i]
+            )?;
+        }
+        if ram_max < self.ram.len() {
+            writeln!(f, "| ··· | {:#5} |", 0)?;
+        }
+        Ok(())
+    }
+    fn print_rom(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        writeln!(f, "Program memory")?;
+        for i in 0..self.last_instruction_address() {
+            write!(f, "| {:#3} | {}", i, self.rom[i])?;
+            if self.program_counter == i {
+                write!(f, " <=")?;
+            }
+                writeln!(f, "")?;
+        if self.last_instruction_address() < self.rom.len() {
+            write!(f, "| ··· | nop")?;
+            if self.program_counter >= self.last_instruction_address() {
+                writeln!(f, " <=")?;
+            } else {
+                writeln!(f, "")?;
+            }
+        }
+        Ok(())
     }
 }
