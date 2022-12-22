@@ -1,3 +1,5 @@
+pub mod flag_registers;
+pub mod processor;
 use crate::instructions::Instruction;
 
 #[derive(Debug)]
