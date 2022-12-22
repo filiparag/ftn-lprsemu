@@ -58,20 +58,23 @@ fn main() {
                     }
                 }
                 "r" | "run" => {
-                    p.run(true);
-                    if print_always {
+                    if let Err(e) = p.run(true) {
+                        println!("Emulation error: {:?}", e)
+                    } else if print_always {
                         println!("{p}")
                     }
                 }
                 "ra" | "run all" => {
-                    p.run(false);
-                    if print_always {
+                    if let Err(e) = p.run(false) {
+                        println!("Emulation error: {:?}", e)
+                    } else if print_always {
                         println!("{p}")
                     }
                 }
                 "s" | "step" | "" => {
-                    p.tick();
-                    if print_always {
+                    if let Err(e) = p.tick() {
+                        println!("Emulation error: {:?}", e)
+                    } else if print_always {
                         println!("{p}")
                     }
                 }
@@ -82,6 +85,12 @@ fn main() {
                     }
                     let line: usize = input[1].parse().expect("Parsing error");
                     p.toggle_breakpoint(line);
+                    if print_always {
+                        println!("{p}")
+                    }
+                }
+                "bc" | "breakpoint clear" => {
+                    p.clear_breakpoints();
                     if print_always {
                         println!("{p}")
                     }
@@ -109,11 +118,13 @@ fn main() {
                     p.load_rom(asm::BENCHMARK);
                     p.reset();
                     let stopwatch = std::time::Instant::now();
-                    let ticks = p.run(false);
-                    println!(
-                        "Emulation speed: {:.2} MHz",
-                        ticks as f64 / stopwatch.elapsed().as_secs_f64() / 1e6
-                    )
+                    match p.run(false) {
+                        Ok(ticks) => println!(
+                            "Emulation speed: {:.2} MHz",
+                            ticks as f64 / stopwatch.elapsed().as_secs_f64() / 1e6
+                        ),
+                        Err(e) => println!("Emulation error: {:?}", e),
+                    }
                 }
                 "h" | "help" => {
                     println!(
@@ -132,6 +143,7 @@ fn main() {
                     println!("  ra | run all           Run to the end");
                     println!("  s  | step              Execute one instruction");
                     println!("  b  | breakpoint <line> Set breakpoint on line");
+                    println!("  bc | breakpoint clear  Remove all breakpoints");
                     println!("  j  | jump <line>       Set program counter to line");
                     println!("  x  | reset             Reset processor");
                     println!("  e  | benchmark         Emulation speed benchmark");
