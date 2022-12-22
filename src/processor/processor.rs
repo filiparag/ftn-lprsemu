@@ -96,6 +96,9 @@ impl Processor {
     #[allow(dead_code)]
     pub fn run(&mut self, breakpoints: bool) {
         let end = if let Instruction::NoOperation = self.rom[self.last_instruction_address()] {
+            if self.last_instruction_address() == 0 {
+                return;
+            }
             self.last_instruction_address() - 1
         } else {
             self.last_instruction_address()

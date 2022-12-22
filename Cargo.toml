@@ -2,7 +2,14 @@
 name = "lprsemu"
 version = "0.1.0"
 edition = "2021"
-
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+authors = ["Filip Parag <filip@parag.rs>"]
+license = "MIT"
+description = "Emulator for LPRS1 ISA & CPU"
+repository = "https://github.com/filiparag/ftn-lprsemu"
+keywords = ["emulator", "assembler", "assembly"]
+categories = ["command-line-interface", "emulators"]
+include = ["/src"]
+maintenance = { status = "passively-maintained" }
+rust-version = "1.68"
 
 [dependencies]

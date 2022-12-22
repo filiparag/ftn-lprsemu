@@ -80,6 +80,25 @@ fn main() {
                         println!("{}", p)
                     }
                 }
+                "h" | "help" => {
+                    println!(
+                        "{} {} - {}",
+                        env!("CARGO_PKG_NAME"),
+                        env!("CARGO_PKG_VERSION"),
+                        env!("CARGO_PKG_DESCRIPTION")
+                    );
+                    println!("{}", env!("CARGO_PKG_AUTHORS"));
+                    println!("");
+                    println!("Usage:");
+                    println!("  p  | print             Print current state");
+                    println!("  pa | print auto        Toggle state auto-printing");
+                    println!("  r  | run               Run until next breakpoint");
+                    println!("  ra | run all           Run to the end");
+                    println!("  s  | step              Execute one instruction");
+                    println!("  b  | breakpoint <line> Set breakpoint on line");
+                    println!("  j  | jump <line>       Set program counter to line");
+                    println!("  h  | help              Print help");
+                }
                 _ => println!("Command error"),
             }
         } else {
