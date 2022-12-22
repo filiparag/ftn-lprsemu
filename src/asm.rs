@@ -1,7 +1,7 @@
 use crate::{asm, instructions::Instruction, op};
 
 #[allow(dead_code)]
-pub const ROM_BIN: [&'static str; 4] = [
+pub const ROM_BIN: [&str; 4] = [
     "000000000000000",
     "000000000000000",
     "000000000000000",

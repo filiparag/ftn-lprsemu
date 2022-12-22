@@ -1,5 +1,5 @@
 pub mod flag_registers;
-pub mod processor;
+pub mod implementation;
 
 use crate::instructions::Instruction;
 
@@ -7,7 +7,7 @@ const ROM_SIZE: usize = 256;
 const RAM_SIZE: usize = 256;
 const REG_COUNT: usize = 8;
 
-#[derive(Debug)]
+#[derive(Debug, Default)]
 struct FlagRegisters {
     zero: bool,
     sign: bool,

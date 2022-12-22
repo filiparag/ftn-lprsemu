@@ -1,8 +1,8 @@
 use crate::error::EmulationError;
-use crate::instructions::{ALUInstruction, ControlFlowInstruction, Instruction, MemoryInstruction};
+use crate::instructions::{AluInstruction, ControlFlowInstruction, Instruction, MemoryInstruction};
 use std::str::FromStr;
 
-impl FromStr for ALUInstruction {
+impl FromStr for AluInstruction {
     type Err = EmulationError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
@@ -88,7 +88,7 @@ impl FromStr for Instruction {
         }
 
         match &s[0..2] {
-            "00" => Ok(Self::ALU(s.parse::<ALUInstruction>()?)),
+            "00" => Ok(Self::Alu(s.parse::<AluInstruction>()?)),
             "10" | "11" => Ok(Self::Memory(s.parse::<MemoryInstruction>()?)),
             "01" => Ok(Self::ControlFlow(s.parse::<ControlFlowInstruction>()?)),
             _ => Err(Self::Err::InvalidInstruction),
@@ -114,11 +114,9 @@ fn parse_registers(s: &str) -> Result<(u8, u8, u8), EmulationError> {
 fn parse_address(s: &str) -> Result<u16, EmulationError> {
     if s.len() != 9 {
         Err(EmulationError::InvalidLength)
+    } else if let Ok(addr) = u16::from_str_radix(s, 2) {
+        Ok(addr)
     } else {
-        if let Ok(addr) = u16::from_str_radix(s, 2) {
-            Ok(addr)
-        } else {
-            Err(EmulationError::BinaryParsing)
-        }
+        Err(EmulationError::BinaryParsing)
     }
 }

@@ -2,7 +2,7 @@ pub mod display;
 pub mod from_str;
 
 #[derive(Clone, Copy, Debug, PartialEq)]
-pub enum ALUInstruction {
+pub enum AluInstruction {
     Move(u8, u8),
     Add(u8, u8, u8),
     Subtract(u8, u8, u8),
@@ -48,9 +48,10 @@ pub enum DebugInstruction {
 
 #[derive(Clone, Copy, Debug, Default, PartialEq)]
 pub enum Instruction {
-    ALU(ALUInstruction),
+    Alu(AluInstruction),
     Memory(MemoryInstruction),
     ControlFlow(ControlFlowInstruction),
+    #[allow(unused)]
     Debug(DebugInstruction),
     #[default]
     NoOperation,
@@ -59,19 +60,19 @@ pub enum Instruction {
 #[macro_export]
 macro_rules! op {
     (alu $n:ident $($r:literal),*) => {
-        crate::instructions::Instruction::ALU(crate::instructions::ALUInstruction::$n($($r),*))
+        $crate::instructions::Instruction::Alu($crate::instructions::AluInstruction::$n($($r),*))
     };
     (mem $n:ident $($r:literal),*) => {
-        crate::instructions::Instruction::Memory(crate::instructions::MemoryInstruction::$n($($r),*))
+        $crate::instructions::Instruction::Memory($crate::instructions::MemoryInstruction::$n($($r),*))
     };
     (cnt $n:ident $($r:literal),*) => {
-        crate::instructions::Instruction::ControlFlow(crate::instructions::ControlFlowInstruction::$n($($r),*))
+        $crate::instructions::Instruction::ControlFlow($crate::instructions::ControlFlowInstruction::$n($($r),*))
     };
     (dbg $n:ident $($r:literal),*) => {
-        crate::instructions::Instruction::Debug(crate::instructions::DebugInstruction::$n($($r),*))
+        $crate::instructions::Instruction::Debug($crate::instructions::DebugInstruction::$n($($r),*))
     };
     (nop) => {
-        crate::instructions::Instruction::NoOperation
+        $crate::instructions::Instruction::NoOperation
     };
     (mov $z:literal, $x:literal) => {
         op![alu Move $z, $x]
@@ -152,7 +153,7 @@ macro_rules! op {
         op![dbg Breakpoint $a]
     };
     (halt) => {
-        crate::instructions::Instruction::Debug(crate::instructions::DebugInstruction::Halt)
+        $crate::instructions::Instruction::Debug($crate::instructions::DebugInstruction::Halt)
     };
 }
 

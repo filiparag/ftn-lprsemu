@@ -1,7 +1,7 @@
 use super::{FlagRegisters, Processor, RAM_SIZE, REG_COUNT, ROM_SIZE};
 use crate::error::EmulationError;
 use crate::instructions::{
-    ALUInstruction, ControlFlowInstruction, DebugInstruction, Instruction, MemoryInstruction,
+    AluInstruction, ControlFlowInstruction, DebugInstruction, Instruction, MemoryInstruction,
 };
 
 impl std::fmt::Display for Processor {
@@ -46,8 +46,8 @@ impl Processor {
 
     #[allow(dead_code)]
     pub fn load_rom_str(&mut self, instructions: &[&str]) -> Result<&mut Self, EmulationError> {
-        for i in 0..instructions.len() {
-            self.rom[i] = instructions[i].parse()?;
+        for (i, op) in instructions.iter().enumerate() {
+            self.rom[i] = op.parse()?;
         }
         Ok(self)
     }
@@ -84,7 +84,7 @@ impl Processor {
 
     fn tick_op(&mut self, op: Instruction) {
         match op {
-            Instruction::ALU(op) => self.execute_alu(op),
+            Instruction::Alu(op) => self.execute_alu(op),
             Instruction::Memory(op) => self.execute_memory(op),
             Instruction::ControlFlow(op) => self.execute_control_flow(op),
             Instruction::Debug(op) => self.execute_debug(op),
@@ -135,7 +135,7 @@ impl Processor {
         }
     }
 
-    fn execute_alu(&mut self, op: ALUInstruction) {
+    fn execute_alu(&mut self, op: AluInstruction) {
         macro_rules! reg {
             ($i:ident) => {
                 self.registers[$i as usize]
@@ -143,65 +143,65 @@ impl Processor {
         }
         self.flags.unset();
         match op {
-            ALUInstruction::Move(z, x) => {
+            AluInstruction::Move(z, x) => {
                 reg![z] = reg![x];
                 self.flags.zero = reg![z] == 0;
                 self.flags.sign = reg![z] & 0x8000 != 0;
             }
-            ALUInstruction::Add(z, x, y) => {
+            AluInstruction::Add(z, x, y) => {
                 (reg![z], self.flags.carry) = reg![x].overflowing_add(reg![y]);
                 self.flags.zero = reg![z] == 0;
                 self.flags.sign = reg![z] & 0x8000 != 0;
             }
-            ALUInstruction::Subtract(z, x, y) => {
+            AluInstruction::Subtract(z, x, y) => {
                 (reg![z], self.flags.carry) = reg![x].overflowing_sub(reg![y]);
                 self.flags.zero = reg![z] == 0;
                 self.flags.sign = reg![z] & 0x8000 != 0;
             }
-            ALUInstruction::LogicalAnd(z, x, y) => {
+            AluInstruction::LogicalAnd(z, x, y) => {
                 reg![z] = reg![x] & reg![y];
                 self.flags.zero = reg![z] == 0;
                 self.flags.sign = reg![z] & 0x8000 != 0;
             }
-            ALUInstruction::LogicalOr(z, x, y) => {
+            AluInstruction::LogicalOr(z, x, y) => {
                 reg![z] = reg![x] | reg![y];
                 self.flags.zero = reg![z] == 0;
                 self.flags.sign = reg![z] & 0x8000 != 0;
             }
-            ALUInstruction::LogicalNot(z, x) => {
+            AluInstruction::LogicalNot(z, x) => {
                 reg![z] = !reg![x];
                 self.flags.zero = reg![z] == 0;
                 self.flags.sign = reg![z] & 0x8000 != 0;
             }
-            ALUInstruction::Increment(z, x) => {
+            AluInstruction::Increment(z, x) => {
                 (reg![z], self.flags.carry) = reg![x].overflowing_add(1);
                 self.flags.zero = reg![z] == 0;
                 self.flags.sign = reg![z] & 0x8000 != 0;
             }
-            ALUInstruction::Decrement(z, x) => {
+            AluInstruction::Decrement(z, x) => {
                 (reg![z], self.flags.carry) = reg![x].overflowing_sub(1);
                 self.flags.zero = reg![z] == 0;
                 self.flags.sign = reg![z] & 0x8000 != 0;
             }
-            ALUInstruction::LShiftLeft(z, x) => {
+            AluInstruction::LShiftLeft(z, x) => {
                 self.flags.carry = reg![z] & 0x8000 != 0;
                 reg![z] = unsafe { reg![x].unchecked_shl(1) };
                 self.flags.zero = reg![z] == 0;
                 self.flags.sign = reg![z] & 0x8000 != 0;
             }
-            ALUInstruction::LShiftRight(z, x) => {
+            AluInstruction::LShiftRight(z, x) => {
                 self.flags.carry = reg![z] & 0x0001 != 0;
                 reg![z] = unsafe { reg![x].unchecked_shr(1) };
                 self.flags.zero = reg![z] == 0;
                 self.flags.sign = reg![z] & 0x8000 != 0;
             }
-            ALUInstruction::AShiftLeft(z, x) => {
+            AluInstruction::AShiftLeft(z, x) => {
                 self.flags.carry = reg![z] & 0x8000 != 0;
                 reg![z] = unsafe { reg![x].unchecked_shl(1) };
                 self.flags.zero = reg![z] == 0;
                 self.flags.sign = reg![z] & 0x8000 != 0;
             }
-            ALUInstruction::AShiftRight(z, x) => {
+            AluInstruction::AShiftRight(z, x) => {
                 self.flags.carry = reg![z] & 0x0001 != 0;
                 let sign_bit = reg![z] & 0x8000;
                 reg![z] = unsafe { reg![x].unchecked_shr(1) } | sign_bit;
@@ -322,13 +322,13 @@ impl Processor {
     fn print_registers(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         writeln!(f, "Registers")?;
         for i in 0..self.registers.len() {
-            write!(f, "|     R{} ", i)?;
+            write!(f, "|     R{i} ")?;
         }
-        writeln!(f, "")?;
+        writeln!(f)?;
         for i in 0..self.registers.len() {
             write!(f, "| {:#6} ", self.registers[i] as i16)?;
         }
-        writeln!(f, "")?;
+        writeln!(f)?;
         Ok(())
     }
 
@@ -339,7 +339,7 @@ impl Processor {
             "[ zero: {:#5} ]   [ sign: {:#5} ]   [ carry: {:#5} ]",
             self.flags.zero, self.flags.sign, self.flags.carry
         )?;
-        writeln!(f, "")?;
+        writeln!(f)?;
         Ok(())
     }
 
@@ -375,7 +375,7 @@ impl Processor {
             if self.breakpoints[i] {
                 writeln!(f, " (*)")?;
             } else {
-                writeln!(f, "")?;
+                writeln!(f)?;
             }
         }
         if self.last_instruction_address() < self.rom.len() {
@@ -383,7 +383,7 @@ impl Processor {
             if self.program_counter >= self.last_instruction_address() {
                 writeln!(f, " <=")?;
             } else {
-                writeln!(f, "")?;
+                writeln!(f)?;
             }
         }
         Ok(())

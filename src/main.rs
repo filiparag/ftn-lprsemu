@@ -6,10 +6,10 @@ mod error;
 mod instructions;
 mod processor;
 
-fn prompt(name: &str) -> Option<Vec<String>> {
+fn prompt(separator: &str) -> Option<Vec<String>> {
     use std::io::Write;
     let mut line = String::new();
-    print!("{}", name);
+    print!("{} {} ", env!("CARGO_PKG_NAME"), separator);
     std::io::stdout().flush().unwrap();
     match std::io::stdin().read_line(&mut line) {
         Ok(_) => Some(line.trim().split(' ').map(str::to_string).collect()),
@@ -20,42 +20,42 @@ fn prompt(name: &str) -> Option<Vec<String>> {
 fn main() {
     let mut p = Processor::new();
 
-    p.load_ram(&asm::DATA_MEMORY);
+    p.load_ram(asm::DATA_MEMORY);
     // p.load_rom_str(&asm::ROM_BIN).unwrap();
-    p.load_rom(&asm::ASSEMBLY_CODE);
+    p.load_rom(asm::ASSEMBLY_CODE);
 
     let mut print_always: bool = true;
-    println!("{}", p);
+    println!("{p}");
     loop {
-        if let Some(input) = prompt("lprsemu >> ") {
-            if input.len() == 0 {
+        if let Some(input) = prompt(">>") {
+            if input.is_empty() {
                 continue;
             }
             if print_always {
                 print!("{}[2J", 27 as char);
             }
             match input[0].as_str() {
-                "p" | "print" => println!("{}", p),
+                "p" | "print" => println!("{p}"),
                 "pa" | "print auto" => {
                     print_always = !print_always;
-                    println!("Auto-print: {}", print_always);
+                    println!("Auto-print: {print_always}");
                 }
                 "r" | "run" => {
                     p.run(true);
                     if print_always {
-                        println!("{}", p)
+                        println!("{p}")
                     }
                 }
                 "ra" | "run all" => {
                     p.run(false);
                     if print_always {
-                        println!("{}", p)
+                        println!("{p}")
                     }
                 }
                 "s" | "step" | "" => {
                     p.tick();
                     if print_always {
-                        println!("{}", p)
+                        println!("{p}")
                     }
                 }
                 "b" | "breakpoint" => {
@@ -66,7 +66,7 @@ fn main() {
                     let line: usize = input[1].parse().expect("Parsing error");
                     p.toggle_breakpoint(line);
                     if print_always {
-                        println!("{}", p)
+                        println!("{p}")
                     }
                 }
                 "j" | "jump" => {
@@ -75,9 +75,9 @@ fn main() {
                         continue;
                     }
                     let line: usize = input[1].parse().expect("Parsing error");
-                    p.toggle_breakpoint(line);
+                    p.program_counter_jump(line);
                     if print_always {
-                        println!("{}", p)
+                        println!("{p}")
                     }
                 }
                 "h" | "help" => {
@@ -88,7 +88,7 @@ fn main() {
                         env!("CARGO_PKG_DESCRIPTION")
                     );
                     println!("{}", env!("CARGO_PKG_AUTHORS"));
-                    println!("");
+                    println!();
                     println!("Usage:");
                     println!("  p  | print             Print current state");
                     println!("  pa | print auto        Toggle state auto-printing");
