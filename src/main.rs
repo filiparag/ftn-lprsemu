@@ -1,6 +1,7 @@
 #![feature(unchecked_math)]
 
-use processor::Processor;
+use processor::{DisplayRadix, DisplaySigned, Processor};
+
 mod asm;
 mod error;
 mod instructions;
@@ -39,6 +40,22 @@ fn main() {
                 "pa" | "print auto" => {
                     print_always = !print_always;
                     println!("Auto-print: {print_always}");
+                }
+                "d" | "radix" => {
+                    if input.len() != 2 {
+                        println!("Argument error");
+                        continue;
+                    }
+                    match input[1].as_str() {
+                        "u" => p.set_radix(DisplayRadix::Decimal(DisplaySigned::Unsigned)),
+                        "s" => p.set_radix(DisplayRadix::Decimal(DisplaySigned::Signed)),
+                        "x" => p.set_radix(DisplayRadix::Hexadecimal),
+                        "b" => p.set_radix(DisplayRadix::Binary),
+                        _ => println!("Argument error"),
+                    }
+                    if print_always {
+                        println!("{p}")
+                    }
                 }
                 "r" | "run" => {
                     p.run(true);
@@ -80,6 +97,24 @@ fn main() {
                         println!("{p}")
                     }
                 }
+                "x" | "reset" => {
+                    p.load_ram(asm::DATA_MEMORY);
+                    p.load_rom(asm::ASSEMBLY_CODE);
+                    p.reset();
+                    if print_always {
+                        println!("{p}")
+                    }
+                }
+                "e" | "benchmark" => {
+                    p.load_rom(asm::BENCHMARK);
+                    p.reset();
+                    let stopwatch = std::time::Instant::now();
+                    let ticks = p.run(false);
+                    println!(
+                        "Emulation speed: {:.2} MHz",
+                        ticks as f64 / stopwatch.elapsed().as_secs_f64() / 1e6
+                    )
+                }
                 "h" | "help" => {
                     println!(
                         "{} {} - {}",
@@ -92,11 +127,14 @@ fn main() {
                     println!("Usage:");
                     println!("  p  | print             Print current state");
                     println!("  pa | print auto        Toggle state auto-printing");
+                    println!("  d  | radix <u/s/x/b>   Toggle decimal display form");
                     println!("  r  | run               Run until next breakpoint");
                     println!("  ra | run all           Run to the end");
                     println!("  s  | step              Execute one instruction");
                     println!("  b  | breakpoint <line> Set breakpoint on line");
                     println!("  j  | jump <line>       Set program counter to line");
+                    println!("  x  | reset             Reset processor");
+                    println!("  e  | benchmark         Emulation speed benchmark");
                     println!("  h  | help              Print help");
                 }
                 _ => println!("Command error"),

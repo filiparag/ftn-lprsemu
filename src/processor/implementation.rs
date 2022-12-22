@@ -1,4 +1,4 @@
-use super::{FlagRegisters, Processor, RAM_SIZE, REG_COUNT, ROM_SIZE};
+use super::{DisplayRadix, DisplaySigned, FlagRegisters, Processor, RAM_SIZE, REG_COUNT, ROM_SIZE};
 use crate::error::EmulationError;
 use crate::instructions::{
     AluInstruction, ControlFlowInstruction, DebugInstruction, Instruction, MemoryInstruction,
@@ -27,6 +27,7 @@ impl Processor {
             program_counter: 0,
             runtime_counter: 0,
             breakpoints: [false; ROM_SIZE],
+            radix: DisplayRadix::Decimal(DisplaySigned::Unsigned),
         }
     }
 
@@ -64,6 +65,18 @@ impl Processor {
     }
 
     #[allow(dead_code)]
+    pub fn reset(&mut self) {
+        self.registers = [0; REG_COUNT];
+        self.flags = FlagRegisters::default();
+        self.program_counter = 0;
+    }
+
+    #[allow(dead_code)]
+    pub fn set_radix(&mut self, radix: DisplayRadix) {
+        self.radix = radix;
+    }
+
+    #[allow(dead_code)]
     pub fn tick(&mut self) -> bool {
         if self.program_counter >= ROM_SIZE {
             return false;
@@ -94,10 +107,11 @@ impl Processor {
     }
 
     #[allow(dead_code)]
-    pub fn run(&mut self, breakpoints: bool) {
+    pub fn run(&mut self, breakpoints: bool) -> usize {
+        let instruction_count = self.runtime_counter;
         let end = if let Instruction::NoOperation = self.rom[self.last_instruction_address()] {
             if self.last_instruction_address() == 0 {
-                return;
+                return 0;
             }
             self.last_instruction_address() - 1
         } else {
@@ -113,6 +127,7 @@ impl Processor {
                 break;
             }
         }
+        return self.runtime_counter - instruction_count;
     }
 
     #[allow(dead_code)]
@@ -322,21 +337,19 @@ impl Processor {
     fn print_registers(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         writeln!(f, "Registers")?;
         for i in 0..self.registers.len() {
-            write!(f, "|     R{i} ")?;
+            write!(f, "| R{i}: {} ", self.print_value(self.registers[i]))?;
+            if i != 0 && (i + 1) % 4 == 0 {
+                writeln!(f, "|")?;
+            }
         }
-        writeln!(f)?;
-        for i in 0..self.registers.len() {
-            write!(f, "| {:#6} ", self.registers[i] as i16)?;
-        }
-        writeln!(f)?;
         Ok(())
     }
 
     fn print_flags(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "Flags    ")?;
+        write!(f, "Flags ")?;
         write!(
             f,
-            "[ zero: {:#5} ]   [ sign: {:#5} ]   [ carry: {:#5} ]",
+            "[ zero: {:#5} ] [ sign: {:#5} ] [ carry: {:#5} ]",
             self.flags.zero, self.flags.sign, self.flags.carry
         )?;
         writeln!(f)?;
@@ -353,14 +366,10 @@ impl Processor {
                 .map_while(|&i| if i == 0 { Some(()) } else { None })
                 .count();
         for i in 0..ram_max {
-            writeln!(
-                f,
-                "| {:#3} | {:#5} | 0x{:016b}",
-                i, self.ram[i] as i16, self.ram[i]
-            )?;
+            writeln!(f, "| {:#3} | {}", i, self.print_value(self.ram[i]))?;
         }
         if ram_max < self.ram.len() {
-            writeln!(f, "| ··· | {:#5} |", 0)?;
+            writeln!(f, "| ··· | {}", self.print_value(0))?;
         }
         Ok(())
     }
@@ -387,5 +396,16 @@ impl Processor {
             }
         }
         Ok(())
+    }
+
+    fn print_value(&self, value: u16) -> String {
+        match &self.radix {
+            DisplayRadix::Decimal(signed) => match signed {
+                DisplaySigned::Unsigned => format!("{value:5}"),
+                DisplaySigned::Signed => format!("{:6}", value as i16),
+            },
+            DisplayRadix::Hexadecimal => format!("{value:#06x}"),
+            DisplayRadix::Binary => format!("{value:#018b}"),
+        }
     }
 }

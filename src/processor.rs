@@ -14,6 +14,19 @@ struct FlagRegisters {
     carry: bool,
 }
 
+#[derive(Debug)]
+pub enum DisplaySigned {
+    Unsigned,
+    Signed,
+}
+
+#[derive(Debug)]
+pub enum DisplayRadix {
+    Decimal(DisplaySigned),
+    Hexadecimal,
+    Binary,
+}
+
 pub struct Processor {
     rom: [Instruction; ROM_SIZE],
     ram: [u16; RAM_SIZE],
@@ -22,4 +35,5 @@ pub struct Processor {
     program_counter: usize,
     runtime_counter: usize,
     breakpoints: [bool; ROM_SIZE],
+    radix: DisplayRadix,
 }
