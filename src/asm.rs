@@ -12,7 +12,7 @@ pub const ROM_BIN: [&str; 4] = [
 pub const DATA_MEMORY: &[u16] = &[0, 5, 6];
 
 #[allow(dead_code)]
-pub const ASSEMBLY_CODE: &[Instruction] = &asm![
+pub const ROM_ASM: &[Instruction] = &asm![
     inc 0, 0; // set R0 index to 1
     ld 1, 0; // load operand from mem[1]
     inc 0, 0; // set R0 index to 2

@@ -20,11 +20,8 @@ fn main() {
     use processor::Processor;
     let mut p = Processor::new();
 
-    //p.load_ram(&[10, 20, 30]);
-    //p.load_rom_str(&asm::ROM_BIN).unwrap();
-
+    p.load_rom(asm::ROM_ASM);
     p.load_ram(asm::DATA_MEMORY);
-    p.load_rom(asm::ASSEMBLY_CODE);
 
     let mut print_always: bool = true;
     println!("{p}");
@@ -41,6 +38,25 @@ fn main() {
                 "pa" | "print auto" => {
                     print_always = !print_always;
                     println!("Auto-print: {print_always}");
+                }
+                "la" | "load asm" => {
+                    p.load_rom(asm::ROM_ASM);
+                    p.load_ram(asm::DATA_MEMORY);
+                    p.reset();
+                    if print_always {
+                        println!("{p}")
+                    }
+                }
+                "lb" | "load bin" => {
+                    if let Err(e) = p.load_rom_str(&asm::ROM_BIN) {
+                        println!("Loading error: {:?}", e);
+                    } else {
+                        p.load_ram(asm::DATA_MEMORY);
+                        p.reset();
+                        if print_always {
+                            println!("{p}")
+                        }
+                    }
                 }
                 "d" | "radix" => {
                     if input.len() != 2 {
@@ -110,7 +126,7 @@ fn main() {
                 }
                 "x" | "reset" => {
                     p.load_ram(asm::DATA_MEMORY);
-                    p.load_rom(asm::ASSEMBLY_CODE);
+                    p.load_rom(asm::ROM_ASM);
                     p.reset();
                     if print_always {
                         println!("{p}")
@@ -140,6 +156,8 @@ fn main() {
                     println!("Usage:");
                     println!("  p  | print             Print current state");
                     println!("  pa | print auto        Toggle state auto-printing");
+                    println!("  la | load asm          Load program from ROM_ASM macro");
+                    println!("  lb | load bin          Load program from ROM_BIN strings");
                     println!("  d  | radix <u/s/x/b>   Toggle decimal display form");
                     println!("  r  | run               Run until next breakpoint");
                     println!("  ra | run all           Run to the end");
