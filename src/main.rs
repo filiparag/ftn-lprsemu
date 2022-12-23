@@ -1,7 +1,5 @@
 #![feature(unchecked_math)]
 
-use processor::{DisplayRadix, DisplaySigned, Processor};
-
 mod asm;
 mod error;
 mod instructions;
@@ -19,10 +17,13 @@ fn prompt(separator: &str) -> Option<Vec<String>> {
 }
 
 fn main() {
+    use processor::Processor;
     let mut p = Processor::new();
 
+    //p.load_ram(&[10, 20, 30]);
+    //p.load_rom_str(&asm::ROM_BIN).unwrap();
+
     p.load_ram(asm::DATA_MEMORY);
-    // p.load_rom_str(&asm::ROM_BIN).unwrap();
     p.load_rom(asm::ASSEMBLY_CODE);
 
     let mut print_always: bool = true;
@@ -46,6 +47,7 @@ fn main() {
                         println!("Argument error");
                         continue;
                     }
+                    use processor::{DisplayRadix, DisplaySigned};
                     match input[1].as_str() {
                         "u" => p.set_radix(DisplayRadix::Decimal(DisplaySigned::Unsigned)),
                         "s" => p.set_radix(DisplayRadix::Decimal(DisplaySigned::Signed)),

@@ -1,4 +1,4 @@
-use crate::{asm, instructions::Instruction, op};
+use crate::{asm, instructions::Instruction};
 
 #[allow(dead_code)]
 pub const ROM_BIN: [&str; 4] = [
