@@ -7,21 +7,11 @@ use crate::processor::ROM_SIZE;
 
 impl Processor {
     pub(super) fn execute_debug(&mut self, op: DebugInstruction) -> Result<(), EmulationError> {
-        macro_rules! reg {
-            ($i:ident) => {
-                self.registers[$i as usize]
-            };
-        }
-        macro_rules! mem {
-            ($i:expr) => {
-                self.ram[$i as usize]
-            };
-        }
         self.flags.unset();
         match op {
             DebugInstruction::SetRegister(z, v) => {
                 in_range![REG_COUNT; z];
-                reg![z] = v;
+                reg![self; z] = v;
                 Ok(())
             }
             DebugInstruction::SetFlagZero(v) => {
@@ -38,7 +28,7 @@ impl Processor {
             }
             DebugInstruction::SetMemory(addr, v) => {
                 in_range![RAM_SIZE; addr];
-                mem![addr] = v;
+                mem![self; addr] = v;
                 Ok(())
             }
             DebugInstruction::Breakpoint(addr) => {
