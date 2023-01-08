@@ -34,13 +34,13 @@ Program memory
 |   6 |     dec   R2, R2
 |   7 |     jmpnz 5 (loop) <=
 |   8 |     st    R0, R2
+|     | shift:
 |   9 |     shr   R0, R0 (*)
-|  10 |     jmpnz 9
+|  10 |     jmpnz 9 (shift)
 |     | divide:
 |  11 |     shl   R1, R1
 |  12 |     jmpnz 11 (divide)
-|     | end:
-| ··· |     nop
+| ··· | nop
 
 lprsemu >>
 ```
