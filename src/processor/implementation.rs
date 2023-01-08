@@ -1,5 +1,7 @@
+use std::collections::HashMap;
+
+use super::EmulationError;
 use super::{DisplayRadix, DisplaySigned, FlagRegisters, Processor, RAM_SIZE, REG_COUNT, ROM_SIZE};
-use crate::error::EmulationError;
 use crate::instructions::Instruction;
 
 mod alu;
@@ -43,6 +45,7 @@ impl Processor {
             runtime_counter: 0,
             breakpoints: [false; ROM_SIZE],
             radix: DisplayRadix::Decimal(DisplaySigned::Unsigned),
+            labels: HashMap::new(),
         }
     }
 
@@ -58,6 +61,7 @@ impl Processor {
         self.rom
             .iter_mut()
             .for_each(|op| *op = Instruction::NoOperation);
+        self.labels.clear();
     }
 
     #[allow(dead_code)]
@@ -72,6 +76,12 @@ impl Processor {
     pub fn load_ram(&mut self, data: &[u16]) -> &mut Self {
         self.clear_ram();
         self.ram[0..data.len()].copy_from_slice(data);
+        self
+    }
+
+    #[allow(dead_code)]
+    pub fn load_labels(&mut self, labels: HashMap<usize, Vec<String>>) -> &mut Self {
+        self.labels = labels;
         self
     }
 

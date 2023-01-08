@@ -1,5 +1,5 @@
-use crate::error::EmulationError;
 use crate::instructions::{AluInstruction, ControlFlowInstruction, Instruction, MemoryInstruction};
+use crate::processor::EmulationError;
 use std::str::FromStr;
 
 impl FromStr for AluInstruction {

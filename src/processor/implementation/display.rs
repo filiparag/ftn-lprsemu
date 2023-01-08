@@ -1,5 +1,5 @@
-use super::Processor;
-use crate::processor::{DisplayRadix, DisplaySigned};
+use crate::instructions::Instruction;
+use crate::processor::{DisplayRadix, DisplaySigned, Processor};
 use std::fmt::{Formatter, Result};
 
 impl std::fmt::Display for Processor {
@@ -56,9 +56,20 @@ impl Processor {
     }
 
     fn print_rom(&self, f: &mut Formatter<'_>) -> Result {
+        let indent = if self.labels.is_empty() { "" } else { "    " };
         writeln!(f, "Program memory")?;
         for i in 0..self.last_instruction_address() {
-            write!(f, "| {:#3} | {}", i, self.rom[i])?;
+            if let Some(labels) = self.labels.get(&i) {
+                for label in labels {
+                    writeln!(f, "|     | {label}:")?;
+                }
+            }
+            write!(f, "| {i:#3} |{indent} {}", self.rom[i])?;
+            if let Instruction::ControlFlow(op) = self.rom[i] {
+                if let Some(labels) = self.labels.get(&(op.get_address() as usize)) {
+                    write!(f, " ({})", labels[labels.len() - 1])?;
+                }
+            }
             if self.program_counter == i {
                 write!(f, " <=")?;
             }

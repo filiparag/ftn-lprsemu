@@ -7,11 +7,12 @@ use crate::op;
 use crate::processor::{RAM_SIZE, ROM_SIZE};
 
 #[derive(Parser)]
-#[grammar = "src/assembler/isa.pest"]
+#[grammar = "src/parser/isa.pest"]
 pub struct AsmFileParser;
 
 type RawInstructions<'a> = Vec<RawInstruction<'a>>;
 type Labels<'a> = HashMap<&'a str, usize>;
+pub type AsmFileData = (Vec<Instruction>, Vec<u16>, HashMap<usize, Vec<String>>);
 
 struct AsmFile<'a> {
     data: Vec<u16>,
@@ -132,8 +133,8 @@ impl<'a> TryFrom<Pair<'a, Rule>> for RawInstruction<'a> {
 }
 
 fn parse_instructions<'a>(
-    instructions: RawInstructions<'a>,
-    labels: Labels<'a>,
+    instructions: &RawInstructions<'a>,
+    labels: &Labels<'a>,
 ) -> Result<Vec<Instruction>, ParsingError> {
     let mut processed: Vec<Instruction> = Vec::with_capacity(instructions.len());
     for ins in instructions {
@@ -143,7 +144,7 @@ fn parse_instructions<'a>(
                     Some(l) => *l as u16,
                     None => return Err(ParsingError::UndefinedLabel),
                 };
-                match op {
+                match *op {
                     "jmp" => processed.push(op![jmp line]),
                     "jmpz" => processed.push(op![jmpz line]),
                     "jmps" => processed.push(op![jmps line]),
@@ -154,7 +155,7 @@ fn parse_instructions<'a>(
                     _ => return Err(ParsingError::InvalidInstruction),
                 }
             }
-            RawInstruction::Reg2 { op, z, x } => match (op, z.parse::<u8>(), x.parse::<u8>()) {
+            RawInstruction::Reg2 { op, z, x } => match (*op, z.parse::<u8>(), x.parse::<u8>()) {
                 ("mov", Ok(z), Ok(x)) => processed.push(op![mov z, x]),
                 ("inc", Ok(z), Ok(x)) => processed.push(op![inc z, x]),
                 ("dec", Ok(z), Ok(x)) => processed.push(op![dec z, x]),
@@ -167,7 +168,7 @@ fn parse_instructions<'a>(
                 _ => return Err(ParsingError::InvalidInstruction),
             },
             RawInstruction::Reg3 { op, z, x, y } => {
-                match (op, z.parse::<u8>(), x.parse::<u8>(), y.parse::<u8>()) {
+                match (*op, z.parse::<u8>(), x.parse::<u8>(), y.parse::<u8>()) {
                     ("add", Ok(z), Ok(x), Ok(y)) => processed.push(op![add z, x, y]),
                     ("sub", Ok(z), Ok(x), Ok(y)) => processed.push(op![sub z, x, y]),
                     ("and", Ok(z), Ok(x), Ok(y)) => processed.push(op![and z, x, y]),
@@ -202,3 +203,88 @@ impl From<pest::error::Error<Rule>> for ParsingError {
     }
 }
 
+#[derive(Debug)]
+enum ProgramSection {
+    Data,
+    Text,
+    Unknown,
+}
+
+impl From<&str> for ProgramSection {
+    fn from(value: &str) -> Self {
+        match value {
+            "data" => Self::Data,
+            "text" => Self::Text,
+            _ => Self::Unknown,
+        }
+    }
+}
+
+pub fn parse_file(path: &str) -> Result<AsmFileData, ParsingError> {
+    let text = std::fs::read_to_string(path)?;
+    let file = AsmFileParser::parse(Rule::file, &text)?.next();
+    let pairs;
+    if let Some(p) = file {
+        pairs = p;
+    } else {
+        return Err(ParsingError::MalformedFile);
+    }
+    let mut asmfile = AsmFile {
+        data: Vec::with_capacity(RAM_SIZE),
+        instructions: Vec::with_capacity(ROM_SIZE),
+        labels: HashMap::with_capacity(ROM_SIZE),
+    };
+    let mut current_section: Option<ProgramSection> = None;
+    for line in pairs.into_inner() {
+        match line.as_rule() {
+            Rule::section => {
+                if let Some(section) = line.into_inner().next() {
+                    current_section = Some(section.as_str().into());
+                } else {
+                    return Err(ParsingError::MalformedFile);
+                }
+            }
+            Rule::label => {
+                if let Some(ProgramSection::Text) = current_section {
+                    if let Some(label) = line.into_inner().next() {
+                        asmfile
+                            .labels
+                            .insert(label.as_str(), asmfile.instructions.len());
+                    } else {
+                        return Err(ParsingError::MalformedFile);
+                    }
+                } else {
+                    return Err(ParsingError::UnexpectedToken);
+                }
+            }
+            Rule::instruction => {
+                if let Ok(i) = RawInstruction::try_from(line) {
+                    asmfile.instructions.push(i);
+                }
+            }
+            Rule::number => {
+                if let Some(ProgramSection::Data) = current_section {
+                    if let Ok(data) = line.as_span().as_str().parse::<u16>() {
+                        asmfile.data.push(data);
+                    } else {
+                        return Err(ParsingError::MalformedFile);
+                    }
+                } else {
+                    return Err(ParsingError::UnexpectedToken);
+                }
+            }
+            Rule::EOI => (),
+            _ => {}
+        }
+    }
+    let instructions = parse_instructions(&asmfile.instructions, &asmfile.labels)?;
+    let mut labels: HashMap<usize, Vec<String>> = HashMap::with_capacity(asmfile.labels.len());
+    for (k, v) in &asmfile.labels {
+        if let Some(bucket) = labels.get_mut(v) {
+            bucket.push((*k).to_owned());
+        } else {
+            labels.insert(*v, vec![(*k).to_owned()]);
+        }
+    }
+    Ok((instructions, asmfile.data, labels))
+}

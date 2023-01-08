@@ -1,7 +1,7 @@
 use super::Processor;
 use crate::{in_range, mem, reg};
 
-use crate::error::EmulationError;
+use super::EmulationError;
 use crate::instructions::MemoryInstruction;
 
 impl Processor {

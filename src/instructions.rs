@@ -1,5 +1,6 @@
 mod display;
 mod from_str;
+mod implementation;
 mod r#macro;
 
 #[derive(Clone, Copy, Debug, PartialEq)]

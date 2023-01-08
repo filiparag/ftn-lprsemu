@@ -4,9 +4,8 @@
 extern crate pest_derive;
 
 mod asm;
-mod assembler;
-mod error;
 mod instructions;
+mod parser;
 mod processor;
 
 fn prompt(separator: &str) -> Option<Vec<String>> {
@@ -23,10 +22,8 @@ fn prompt(separator: &str) -> Option<Vec<String>> {
 fn main() {
     use processor::Processor;
     let mut p = Processor::new();
-
     p.load_rom(asm::ROM_ASM);
     p.load_ram(asm::DATA_MEMORY);
-
     let mut print_always: bool = true;
     println!("{p}");
     loop {
@@ -39,11 +36,11 @@ fn main() {
             }
             match input[0].as_str() {
                 "p" | "print" => println!("{p}"),
-                "pa" | "print auto" => {
+                "pa" | "print-auto" => {
                     print_always = !print_always;
                     println!("Auto-print: {print_always}");
                 }
-                "la" | "load asm" => {
+                "la" | "load-asm" => {
                     p.load_rom(asm::ROM_ASM);
                     p.load_ram(asm::DATA_MEMORY);
                     p.reset();
@@ -51,15 +48,32 @@ fn main() {
                         println!("{p}")
                     }
                 }
-                "lb" | "load bin" => {
+                "lb" | "load-bin" => {
                     if let Err(e) = p.load_rom_str(&asm::ROM_BIN) {
-                        println!("Loading error: {:?}", e);
+                        println!("Loading error: {e:?}");
                     } else {
                         p.load_ram(asm::DATA_MEMORY);
                         p.reset();
                         if print_always {
                             println!("{p}")
                         }
+                    }
+                }
+                "lf" | "load-file" => {
+                    if input.len() != 2 {
+                        println!("Argument error");
+                        continue;
+                    }
+                    match parser::parse_file(input[1].as_str()) {
+                        Ok((rom, ram, labels)) => {
+                            p.load_rom(&rom);
+                            p.load_ram(&ram);
+                            p.load_labels(labels);
+                            if print_always {
+                                println!("{p}")
+                            }
+                        }
+                        Err(e) => println!("Loading error: {e:?}"),
                     }
                 }
                 "d" | "radix" => {
@@ -81,21 +95,21 @@ fn main() {
                 }
                 "r" | "run" => {
                     if let Err(e) = p.run(true) {
-                        println!("Emulation error: {:?}", e)
+                        println!("Emulation error: {e:?}")
                     } else if print_always {
                         println!("{p}")
                     }
                 }
-                "ra" | "run all" => {
+                "ra" | "run-all" => {
                     if let Err(e) = p.run(false) {
-                        println!("Emulation error: {:?}", e)
+                        println!("Emulation error: {e:?}")
                     } else if print_always {
                         println!("{p}")
                     }
                 }
                 "s" | "step" | "" => {
                     if let Err(e) = p.tick() {
-                        println!("Emulation error: {:?}", e)
+                        println!("Emulation error: {e:?}")
                     } else if print_always {
                         println!("{p}")
                     }
@@ -111,7 +125,7 @@ fn main() {
                         println!("{p}")
                     }
                 }
-                "bc" | "breakpoint clear" => {
+                "bc" | "breakpoint-clear" => {
                     p.clear_breakpoints();
                     if print_always {
                         println!("{p}")
@@ -145,7 +159,7 @@ fn main() {
                             "Emulation speed: {:.2} MHz",
                             ticks as f64 / stopwatch.elapsed().as_secs_f64() / 1e6
                         ),
-                        Err(e) => println!("Emulation error: {:?}", e),
+                        Err(e) => println!("Emulation error: {e:?}"),
                     }
                 }
                 "h" | "help" => {
@@ -159,15 +173,16 @@ fn main() {
                     println!();
                     println!("Usage:");
                     println!("  p  | print             Print current state");
-                    println!("  pa | print auto        Toggle state auto-printing");
-                    println!("  la | load asm          Load program from ROM_ASM macro");
-                    println!("  lb | load bin          Load program from ROM_BIN strings");
+                    println!("  pa | print-auto        Toggle state auto-printing");
+                    println!("  la | load-asm          Load program from ROM_ASM macro");
+                    println!("  lb | load-bin          Load program from ROM_BIN strings");
+                    println!("  lf | load-file <path>  Load program from assembly file");
                     println!("  d  | radix <u/s/x/b>   Toggle decimal display form");
                     println!("  r  | run               Run until next breakpoint");
-                    println!("  ra | run all           Run to the end");
+                    println!("  ra | run-all           Run to the end");
                     println!("  s  | step              Execute one instruction");
                     println!("  b  | breakpoint <line> Set breakpoint on line");
-                    println!("  bc | breakpoint clear  Remove all breakpoints");
+                    println!("  bc | breakpoint-clear  Remove all breakpoints");
                     println!("  j  | jump <line>       Set program counter to line");
                     println!("  x  | reset             Reset processor");
                     println!("  e  | benchmark         Emulation speed benchmark");
