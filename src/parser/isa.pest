@@ -1,9 +1,10 @@
 WHITESPACE = _{ " " | "\t" }
-COMMENT = _{ ("//" | "#" | ";")+ ~ ASCII* }
+COMMENT = _{ ("//" | "#" | ";")+ ~ (!NEWLINE ~ ANY)* }
 
 character = @{ ASCII_ALPHANUMERIC | "_" }
 word = @{ character+ }
 number = @{ ASCII_DIGIT+ }
+radix = @{ ("0x" ~ ASCII_HEX_DIGIT+) | ("0b" ~ ASCII_BIN_DIGIT+) }
 
 register = { "R" ~ number }
 section = { "." ~ word }
@@ -26,6 +27,6 @@ instruction = { instr_2r | instr_3r | instr_l }
 
 file = {
     SOI ~
-    ((section | label | instruction | number)? ~ NEWLINE)* ~
+    ((section | label | instruction | radix | number)? ~ NEWLINE)* ~
     EOI
 }

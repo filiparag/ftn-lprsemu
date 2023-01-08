@@ -181,6 +181,30 @@ fn parse_instructions<'a>(
     Ok(processed)
 }
 
+fn parse_radix(pair: Pair<'_, Rule>) -> Result<u16, ParsingError> {
+    let data = pair.as_span().as_str();
+    if data.len() < 3 {
+        return Err(ParsingError::MalformedFile);
+    }
+    match &data[0..=1] {
+        "0x" => {
+            if let Ok(result) = u16::from_str_radix(data.trim_start_matches("0x"), 16) {
+                Ok(result)
+            } else {
+                Err(ParsingError::MalformedFile)
+            }
+        }
+        "0b" => {
+            if let Ok(result) = u16::from_str_radix(data.trim_start_matches("0b"), 2) {
+                Ok(result)
+            } else {
+                Err(ParsingError::MalformedFile)
+            }
+        }
+        _ => Err(ParsingError::UnexpectedToken),
+    }
+}
+
 #[derive(Debug)]
 pub enum ParsingError {
     Filesystem(std::io::Error),
@@ -269,6 +293,13 @@ pub fn parse_file(path: &str) -> Result<AsmFileData, ParsingError> {
                     } else {
                         return Err(ParsingError::MalformedFile);
                     }
+                } else {
+                    return Err(ParsingError::UnexpectedToken);
+                }
+            }
+            Rule::radix => {
+                if let Some(ProgramSection::Data) = current_section {
+                    asmfile.data.push(parse_radix(line)?);
                 } else {
                     return Err(ParsingError::UnexpectedToken);
                 }
