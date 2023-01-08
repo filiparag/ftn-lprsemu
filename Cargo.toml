@@ -1,14 +1,14 @@
 [package]
 name = "lprsemu"
-version = "0.2.0"
+version = "0.3.0"
 edition = "2021"
 authors = ["Filip Parag <filip@parag.rs>"]
 license = "MIT"
-description = "Emulator for LPRS1 ISA & CPU"
+description = "Emulator and debugger for LPRS1 ISA & CPU"
 readme = "README.md"
 repository = "https://github.com/filiparag/ftn-lprsemu"
 keywords = ["emulator", "assembler", "assembly"]
-categories = ["command-line-interface", "emulators"]
+categories = ["command-line-interface", "emulators", "parsing"]
 include = ["/src"]
 maintenance = { status = "passively-maintained" }
 rust-version = "1.68"

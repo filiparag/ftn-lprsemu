@@ -2,7 +2,7 @@
 
 **LPRSemu** is a simple emulator and debugger for
 [LPRS1](https://www.rt-rk.uns.ac.rs/?q=predmeti/e2/lprs-1-logi%C4%8Dko-projektovanje-ra%C4%8Dunarskih-sistema-1)
-ISA & CPU. It supports loading programs from
+ISA & CPU. It supports loading programs from assembly text files,
 [binary string](./src/asm.rs#L3-L9)
 representation or by
 [directly writing](./src/asm.rs#L14-L29)
@@ -23,20 +23,24 @@ Data memory
 |   2 |     6
 | ··· |     0
 Program memory
-|   0 | inc   R0, R0
-|   1 | ld    R1, R0
-|   2 | inc   R0, R0
-|   3 | ld    R2, R0
-|   4 | sub   R0, R0, R0
-|   5 | add   R0, R0, R1
-|   6 | dec   R2, R2
-|   7 | jmpnz 5 <=
-|   8 | st    R0, R2
-|   9 | shr   R0, R0 (*)
-|  10 | jmpnz 9
-|  11 | shl   R1, R1
-|  12 | jmpnz 11
-| ··· | nop
+|     | main:
+|   0 |     inc   R0, R0
+|   1 |     ld    R1, R0
+|   2 |     inc   R0, R0
+|   3 |     ld    R2, R0
+|   4 |     sub   R0, R0, R0
+|     | loop:
+|   5 |     add   R0, R0, R1
+|   6 |     dec   R2, R2
+|   7 |     jmpnz 5 (loop) <=
+|   8 |     st    R0, R2
+|   9 |     shr   R0, R0 (*)
+|  10 |     jmpnz 9
+|     | divide:
+|  11 |     shl   R1, R1
+|  12 |     jmpnz 11 (divide)
+|     | end:
+| ··· |     nop
 
 lprsemu >>
 ```
@@ -48,6 +52,8 @@ lprsemu >>
     ```
 
 2) Choose one option from the following:
+   - Write assembly code in an arbitrary text file.  
+     After launching the emulator, type `lf <file>` to load the program stored in path of `<file>`.
    - Write assembly code into `ROM_ASM` macro located
      in [`src/asm.rs`](./src/asm.rs#L14-L29), and set `DATA_MEMORY` accordingly.
    - Load binary string into `ROM_BIN` from `oQ` in `instr_rom.vhd`, and
