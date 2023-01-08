@@ -1,5 +1,7 @@
 #![feature(unchecked_math)]
 
+use std::collections::HashMap;
+
 #[macro_use]
 extern crate pest_derive;
 
@@ -22,8 +24,26 @@ fn prompt(separator: &str) -> Option<Vec<String>> {
 fn main() {
     use processor::Processor;
     let mut p = Processor::new();
-    p.load_rom(asm::ROM_ASM);
-    p.load_ram(asm::DATA_MEMORY);
+
+    let mut default = match std::env::args().nth(1) {
+        Some(path) => match parser::parse_file(&path) {
+            Ok((ram, rom, labels)) => (ram, rom, labels),
+            Err(e) => {
+                println!("Loading error: {e:?}");
+                return;
+            }
+        },
+        None => (
+            asm::ROM_ASM.to_vec(),
+            asm::DATA_MEMORY.to_vec(),
+            HashMap::new(),
+        ),
+    };
+
+    p.load_rom(&default.0);
+    p.load_ram(&default.1);
+    p.load_labels(default.2);
+
     let mut print_always: bool = true;
     println!("{p}");
     loop {
@@ -43,7 +63,9 @@ fn main() {
                 "la" | "load-asm" => {
                     p.load_rom(asm::ROM_ASM);
                     p.load_ram(asm::DATA_MEMORY);
+                    p.clear_breakpoints();
                     p.reset();
+                    default.1 = asm::DATA_MEMORY.to_vec();
                     if print_always {
                         println!("{p}")
                     }
@@ -53,7 +75,9 @@ fn main() {
                         println!("Loading error: {e:?}");
                     } else {
                         p.load_ram(asm::DATA_MEMORY);
+                        p.clear_breakpoints();
                         p.reset();
+                        default.1 = asm::DATA_MEMORY.to_vec();
                         if print_always {
                             println!("{p}")
                         }
@@ -69,6 +93,9 @@ fn main() {
                             p.load_rom(&rom);
                             p.load_ram(&ram);
                             p.load_labels(labels);
+                            p.clear_breakpoints();
+                            p.reset();
+                            default.1 = ram;
                             if print_always {
                                 println!("{p}")
                             }
@@ -143,8 +170,7 @@ fn main() {
                     }
                 }
                 "x" | "reset" => {
-                    p.load_ram(asm::DATA_MEMORY);
-                    p.load_rom(asm::ROM_ASM);
+                    p.load_ram(&default.1);
                     p.reset();
                     if print_always {
                         println!("{p}")
