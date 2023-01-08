@@ -11,7 +11,7 @@ mod memory;
 #[macro_export]
 macro_rules! in_range {
     ($thresh:ident; $($v:expr),*) => {
-        if $($v as usize >= crate::processor::$thresh as usize)||* {
+        if $($v as usize >= $crate::processor::$thresh as usize)||* {
             return Err(EmulationError::OutOfRange);
         }
     };
@@ -148,7 +148,7 @@ impl Processor {
                 break;
             }
         }
-        return Ok(self.runtime_counter - instruction_count);
+        Ok(self.runtime_counter - instruction_count)
     }
 
     #[allow(dead_code)]

@@ -3,9 +3,9 @@ pub mod implementation;
 
 use crate::instructions::Instruction;
 
-const ROM_SIZE: usize = 256;
-const RAM_SIZE: usize = 256;
-const REG_COUNT: usize = 8;
+pub const ROM_SIZE: usize = 256;
+pub const RAM_SIZE: usize = 256;
+pub const REG_COUNT: usize = 8;
 
 #[derive(Debug, Default)]
 struct FlagRegisters {
