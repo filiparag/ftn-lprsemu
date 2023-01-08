@@ -1,0 +1,31 @@
+WHITESPACE = _{ " " | "\t" }
+COMMENT = _{ ("//" | "#" | ";")+ ~ ASCII* }
+
+character = @{ ASCII_ALPHANUMERIC | "_" }
+word = @{ character+ }
+number = @{ ASCII_DIGIT+ }
+
+register = { "R" ~ number }
+section = { "." ~ word }
+label = { word ~ ":" }
+
+op_2r = { "mov" | "inc" | "dec" | "shl" | "shr" | "ashl" | "ashr" | "ld" | "st" }
+op_3r = { "add" | "sub" | "and" | "or" }
+op_l = { "jmpz" | "jmps" | "jmpc" | "jmpnz" | "jmpns" | "jmpnc" | "jmp" }
+
+instr_2r = {
+    op_2r ~ register ~ "," ~ register
+}
+instr_3r = {
+    op_3r ~ register ~ "," ~ register ~ "," ~ register
+}
+instr_l = {
+    op_l ~ word
+}
+instruction = { instr_2r | instr_3r | instr_l }
+
+file = {
+    SOI ~
+    ((section | label | instruction | number)? ~ NEWLINE)* ~
+    EOI
+}

@@ -1,6 +1,10 @@
 #![feature(unchecked_math)]
 
+#[macro_use]
+extern crate pest_derive;
+
 mod asm;
+mod assembler;
 mod error;
 mod instructions;
 mod processor;
