@@ -16,3 +16,6 @@ rust-version = "1.68"
 [dependencies]
 pest = "2.5.2"
 pest_derive = "2.5.2"
+
+[profile.release]
+strip = true
