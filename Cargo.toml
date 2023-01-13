@@ -1,6 +1,6 @@
 [package]
 name = "lprsemu"
-version = "0.3.0"
+version = "0.4.0"
 edition = "2021"
 authors = ["Filip Parag <filip@parag.rs>"]
 license = "MIT"
@@ -12,6 +12,14 @@ categories = ["command-line-interface", "emulators", "parsing"]
 include = ["/src"]
 maintenance = { status = "passively-maintained" }
 rust-version = "1.68"
+
+[[bin]]
+name = "lprsemu"
+path = "src/main.rs"
+
+[[bin]]
+name = "lprsasm"
+path = "src/assembler.rs"
 
 [dependencies]
 clearscreen = { version = "2.0.0", features = ["windows-console"] }

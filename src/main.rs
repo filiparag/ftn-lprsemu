@@ -50,7 +50,7 @@ fn load_cpu(
     }
 }
 
-fn load_from_file(proc: &mut Processor, path: &str) -> bool {
+pub fn load_from_file(proc: &mut Processor, path: &str) -> bool {
     match parser::parse_file(&path) {
         Ok((rom, ram, labels)) => load_cpu(proc, Some(&rom), Some(&ram), Some(labels)),
         Err(e) => {
