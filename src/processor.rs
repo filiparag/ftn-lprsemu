@@ -32,6 +32,7 @@ pub enum DisplayRadix {
 pub struct Processor {
     rom: [Instruction; ROM_SIZE],
     ram: [u16; RAM_SIZE],
+    ram_initial: [u16; RAM_SIZE],
     registers: [u16; REG_COUNT],
     flags: FlagRegisters,
     program_counter: usize,

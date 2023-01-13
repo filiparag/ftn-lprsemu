@@ -39,6 +39,7 @@ impl Processor {
         Processor {
             rom: [Instruction::default(); ROM_SIZE],
             ram: [0; RAM_SIZE],
+            ram_initial: [0; RAM_SIZE],
             registers: [0; REG_COUNT],
             flags: FlagRegisters::default(),
             program_counter: 0,
@@ -76,6 +77,7 @@ impl Processor {
     pub fn load_ram(&mut self, data: &[u16]) -> &mut Self {
         self.clear_ram();
         self.ram[0..data.len()].copy_from_slice(data);
+        self.ram_initial.copy_from_slice(&self.ram);
         self
     }
 
@@ -97,6 +99,7 @@ impl Processor {
 
     #[allow(dead_code)]
     pub fn reset(&mut self) {
+        self.ram.copy_from_slice(&self.ram_initial);
         self.registers = [0; REG_COUNT];
         self.flags = FlagRegisters::default();
         self.program_counter = 0;
