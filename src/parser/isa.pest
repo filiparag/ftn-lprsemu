@@ -5,6 +5,8 @@ character = @{ ASCII_ALPHANUMERIC | "_" }
 word = @{ character+ }
 number = @{ ASCII_DIGIT+ }
 radix = @{ ("0x" ~ ASCII_HEX_DIGIT+) | ("0b" ~ ASCII_BIN_DIGIT+) }
+negative = @{ "-" }
+sep = _{ "," }
 
 register = { "R" ~ number }
 section = { "." ~ word }
@@ -25,8 +27,11 @@ instr_l = {
 }
 instruction = { instr_2r | instr_3r | instr_l }
 
+signed = { negative? ~ (radix | number) }
+data = { signed ~ sep? }
+
 file = {
     SOI ~
-    ((section | label | instruction | radix | number)? ~ NEWLINE)* ~
+    ((section | label | instruction | data+)? ~ NEWLINE)* ~
     EOI
 }

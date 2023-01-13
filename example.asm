@@ -1,7 +1,6 @@
 .data
 0x0000
-5
-6
+5, 6
 
 .text
 main:

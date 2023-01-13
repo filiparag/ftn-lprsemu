@@ -186,23 +186,47 @@ fn parse_radix(pair: Pair<'_, Rule>) -> Result<u16, ParsingError> {
     if data.len() < 3 {
         return Err(ParsingError::MalformedFile);
     }
-    match &data[0..=1] {
-        "0x" => {
-            if let Ok(result) = u16::from_str_radix(data.trim_start_matches("0x"), 16) {
-                Ok(result)
-            } else {
-                Err(ParsingError::MalformedFile)
-            }
-        }
-        "0b" => {
-            if let Ok(result) = u16::from_str_radix(data.trim_start_matches("0b"), 2) {
-                Ok(result)
-            } else {
-                Err(ParsingError::MalformedFile)
-            }
-        }
-        _ => Err(ParsingError::UnexpectedToken),
+    let radix = match &data[0..=1] {
+        "0x" => 16,
+        "0b" => 2,
+        _ => return Err(ParsingError::UnexpectedToken),
+    };
+    let data = data.trim_start_matches("0x");
+    if let Ok(result) = u16::from_str_radix(data, radix) {
+        Ok(result)
+    } else {
+        Err(ParsingError::MalformedFile)
     }
+}
+
+fn parse_number(pair: Pair<'_, Rule>) -> Result<u16, ParsingError> {
+    if let Ok(data) = pair.as_span().as_str().parse::<u16>() {
+        Ok(data)
+    } else {
+        Err(ParsingError::MalformedFile)
+    }
+}
+
+fn parse_data(pair: Pair<'_, Rule>) -> Result<u16, ParsingError> {
+    if let Some(data) = pair.into_inner().next() {
+        let mut data = data.into_inner();
+        let mut negative = false;
+        let mut number = None;
+        while let Some(value) = data.next() {
+            match value.as_rule() {
+                Rule::negative => negative = true,
+                Rule::number => number = Some(parse_number(value)?),
+                Rule::radix => number = Some(parse_radix(value)?),
+                _ => return Err(ParsingError::UnexpectedToken),
+            }
+        }
+        match (number, negative) {
+            (Some(n), false) => return Ok(n),
+            (Some(n), true) => return Ok(-(n as i16) as u16),
+            _ => {}
+        }
+    }
+    return Err(ParsingError::UnexpectedToken);
 }
 
 #[derive(Debug)]
@@ -286,20 +310,9 @@ pub fn parse_file(path: &str) -> Result<AsmFileData, ParsingError> {
                     asmfile.instructions.push(i);
                 }
             }
-            Rule::number => {
+            Rule::data => {
                 if let Some(ProgramSection::Data) = current_section {
-                    if let Ok(data) = line.as_span().as_str().parse::<u16>() {
-                        asmfile.data.push(data);
-                    } else {
-                        return Err(ParsingError::MalformedFile);
-                    }
-                } else {
-                    return Err(ParsingError::UnexpectedToken);
-                }
-            }
-            Rule::radix => {
-                if let Some(ProgramSection::Data) = current_section {
-                    asmfile.data.push(parse_radix(line)?);
+                    asmfile.data.push(parse_data(line)?);
                 } else {
                     return Err(ParsingError::UnexpectedToken);
                 }

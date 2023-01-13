@@ -44,7 +44,7 @@ impl Processor {
             program_counter: 0,
             runtime_counter: 0,
             breakpoints: [false; ROM_SIZE],
-            radix: DisplayRadix::Decimal(DisplaySigned::Unsigned),
+            radix: DisplayRadix::Decimal(DisplaySigned::Signed),
             labels: HashMap::new(),
         }
     }
