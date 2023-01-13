@@ -29,7 +29,7 @@ fn main() {
         Some(path) => match parser::parse_file(&path) {
             Ok((ram, rom, labels)) => (ram, rom, labels),
             Err(e) => {
-                println!("Loading error: {e:?}");
+                println!("{e}");
                 return;
             }
         },
@@ -52,7 +52,7 @@ fn main() {
                 continue;
             }
             if print_always {
-                print!("{}[2J", 27 as char);
+                _ = clearscreen::clear();
             }
             match input[0].as_str() {
                 "p" | "print" => println!("{p}"),

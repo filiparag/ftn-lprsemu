@@ -3,26 +3,27 @@ use super::{Pair, ParsingError, Rule};
 fn parse_radix(pair: Pair<'_, Rule>) -> Result<u16, ParsingError> {
     let data = pair.as_span().as_str();
     if data.len() < 3 {
-        return Err(ParsingError::MalformedFile);
+        return Err(ParsingError::UnexpectedToken);
     }
     let radix = match &data[0..=1] {
         "0x" => 16,
         "0b" => 2,
         _ => return Err(ParsingError::UnexpectedToken),
     };
-    let data = data.trim_start_matches("0x");
-    if let Ok(result) = u16::from_str_radix(data, radix) {
+    let value = data.trim_start_matches("0x");
+    if let Ok(result) = u16::from_str_radix(value, radix) {
         Ok(result)
     } else {
-        Err(ParsingError::MalformedFile)
+        Err(ParsingError::NumberConversion(data.into()))
     }
 }
 
 fn parse_number(pair: Pair<'_, Rule>) -> Result<u16, ParsingError> {
-    if let Ok(data) = pair.as_span().as_str().parse::<u16>() {
-        Ok(data)
+    let data = pair.as_span().as_str();
+    if let Ok(result) = data.parse::<u16>() {
+        Ok(result)
     } else {
-        Err(ParsingError::MalformedFile)
+        Err(ParsingError::NumberConversion(data.into()))
     }
 }
 

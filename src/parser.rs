@@ -7,9 +7,11 @@ use crate::processor::{RAM_SIZE, ROM_SIZE};
 use std::collections::HashMap;
 
 mod data;
+mod error;
 mod text;
 
 use data::parse_data;
+use error::ParsingError;
 use text::{parse_instructions, Labels, RawInstruction, RawInstructions};
 
 #[derive(Parser)]
@@ -22,28 +24,6 @@ struct AsmFile<'a> {
     data: Vec<u16>,
     instructions: RawInstructions<'a>,
     labels: Labels<'a>,
-}
-
-#[derive(Debug)]
-pub enum ParsingError {
-    Filesystem(std::io::Error),
-    Pest(pest::error::Error<Rule>),
-    InvalidInstruction,
-    UndefinedLabel,
-    MalformedFile,
-    UnexpectedToken,
-}
-
-impl From<std::io::Error> for ParsingError {
-    fn from(e: std::io::Error) -> Self {
-        Self::Filesystem(e)
-    }
-}
-
-impl From<pest::error::Error<Rule>> for ParsingError {
-    fn from(e: pest::error::Error<Rule>) -> Self {
-        Self::Pest(e)
-    }
 }
 
 #[derive(Debug)]
@@ -84,32 +64,37 @@ pub fn parse_file(path: &str) -> Result<AsmFileData, ParsingError> {
                 if let Some(section) = line.into_inner().next() {
                     current_section = Some(section.as_str().into());
                 } else {
-                    return Err(ParsingError::MalformedFile);
+                    return Err(ParsingError::MissingToken);
                 }
             }
             Rule::label => {
                 if let Some(ProgramSection::Text) = current_section {
                     if let Some(label) = line.into_inner().next() {
-                        asmfile
-                            .labels
-                            .insert(label.as_str(), asmfile.instructions.len());
+                        let label = label.as_str();
+                        if asmfile.labels.contains_key(label) {
+                            return Err(ParsingError::RedefinedLabel(label.into()));
+                        } else {
+                            asmfile.labels.insert(label, asmfile.instructions.len());
+                        }
                     } else {
-                        return Err(ParsingError::MalformedFile);
+                        return Err(ParsingError::MissingToken);
                     }
                 } else {
-                    return Err(ParsingError::UnexpectedToken);
+                    return Err(ParsingError::WrongSection("label".into()));
                 }
             }
             Rule::instruction => {
-                if let Ok(i) = RawInstruction::try_from(line) {
-                    asmfile.instructions.push(i);
+                if let Some(ProgramSection::Text) = current_section {
+                    asmfile.instructions.push(RawInstruction::try_from(line)?);
+                } else {
+                    return Err(ParsingError::WrongSection("instruction".into()));
                 }
             }
             Rule::data => {
                 if let Some(ProgramSection::Data) = current_section {
                     asmfile.data.push(parse_data(line)?);
                 } else {
-                    return Err(ParsingError::UnexpectedToken);
+                    return Err(ParsingError::WrongSection("data".into()));
                 }
             }
             Rule::EOI => (),

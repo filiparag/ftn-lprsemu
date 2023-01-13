@@ -14,6 +14,7 @@ maintenance = { status = "passively-maintained" }
 rust-version = "1.68"
 
 [dependencies]
+clearscreen = { version = "2.0.0", features = ["windows-console"] }
 pest = "2.5.2"
 pest_derive = "2.5.2"
 

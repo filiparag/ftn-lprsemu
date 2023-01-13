@@ -17,10 +17,10 @@ op_3r = { "add" | "sub" | "and" | "or" }
 op_l = { "jmpz" | "jmps" | "jmpc" | "jmpnz" | "jmpns" | "jmpnc" | "jmp" }
 
 instr_2r = {
-    op_2r ~ register ~ "," ~ register
+    op_2r ~ register ~ sep? ~ register
 }
 instr_3r = {
-    op_3r ~ register ~ "," ~ register ~ "," ~ register
+    op_3r ~ register ~ sep? ~ register ~ sep? ~ register
 }
 instr_l = {
     op_l ~ word

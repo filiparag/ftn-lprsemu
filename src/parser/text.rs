@@ -26,28 +26,28 @@ pub enum RawInstruction<'a> {
 pub type RawInstructions<'a> = Vec<RawInstruction<'a>>;
 pub type Labels<'a> = HashMap<&'a str, usize>;
 
-fn parse_instruction_l(pair: Pair<'_, Rule>) -> Result<RawInstruction, ()> {
+fn parse_instruction_l(pair: Pair<'_, Rule>) -> Result<RawInstruction, ParsingError> {
     let mut pairs;
     if let Rule::instr_l = pair.as_rule() {
         pairs = pair.into_inner();
     } else {
-        return Err(());
+        return Err(ParsingError::MissingToken);
     }
     match (pairs.next(), pairs.next()) {
         (Some(op), Some(label)) => Ok(RawInstruction::Label {
             op: op.as_str(),
             label: label.as_str(),
         }),
-        _ => Err(()),
+        _ => Err(ParsingError::MissingToken),
     }
 }
 
-fn parse_instruction_2r(pair: Pair<'_, Rule>) -> Result<RawInstruction, ()> {
+fn parse_instruction_2r(pair: Pair<'_, Rule>) -> Result<RawInstruction, ParsingError> {
     let mut pairs;
     if let Rule::instr_2r = pair.as_rule() {
         pairs = pair.into_inner();
     } else {
-        return Err(());
+        return Err(ParsingError::MissingToken);
     }
     let op = pairs.next();
     if let (Some(r1), Some(r2)) = (
@@ -60,19 +60,19 @@ fn parse_instruction_2r(pair: Pair<'_, Rule>) -> Result<RawInstruction, ()> {
                 z: r1.as_str(),
                 x: r2.as_str(),
             }),
-            _ => Err(()),
+            _ => Err(ParsingError::MissingToken),
         }
     } else {
-        Err(())
+        Err(ParsingError::MissingToken)
     }
 }
 
-fn parse_instruction_3r(pair: Pair<'_, Rule>) -> Result<RawInstruction, ()> {
+fn parse_instruction_3r(pair: Pair<'_, Rule>) -> Result<RawInstruction, ParsingError> {
     let mut pairs;
     if let Rule::instr_3r = pair.as_rule() {
         pairs = pair.into_inner();
     } else {
-        return Err(());
+        return Err(ParsingError::MissingToken);
     }
     let op = pairs.next();
     if let (Some(r1), Some(r2), Some(r3)) = (
@@ -92,15 +92,15 @@ fn parse_instruction_3r(pair: Pair<'_, Rule>) -> Result<RawInstruction, ()> {
                 x: r2.as_str(),
                 y: r3.as_str(),
             }),
-            _ => Err(()),
+            _ => Err(ParsingError::MissingToken),
         }
     } else {
-        Err(())
+        Err(ParsingError::MissingToken)
     }
 }
 
 impl<'a> TryFrom<Pair<'a, Rule>> for RawInstruction<'a> {
-    type Error = ();
+    type Error = ParsingError;
     fn try_from(value: Pair<'a, Rule>) -> Result<Self, Self::Error> {
         if let Rule::instruction = value.as_rule() {
             if let Some(value) = value.into_inner().next() {
@@ -108,13 +108,13 @@ impl<'a> TryFrom<Pair<'a, Rule>> for RawInstruction<'a> {
                     Rule::instr_l => parse_instruction_l(value),
                     Rule::instr_2r => parse_instruction_2r(value),
                     Rule::instr_3r => parse_instruction_3r(value),
-                    _ => Err(()),
+                    _ => Err(ParsingError::UnexpectedToken),
                 }
             } else {
-                Err(())
+                Err(ParsingError::MissingToken)
             }
         } else {
-            Err(())
+            Err(ParsingError::UnexpectedToken)
         }
     }
 }
@@ -129,7 +129,7 @@ pub fn parse_instructions<'a>(
             RawInstruction::Label { op, label } => {
                 let line = match labels.get(label) {
                     Some(l) => *l as u16,
-                    None => return Err(ParsingError::UndefinedLabel),
+                    None => return Err(ParsingError::UndefinedLabel((*label).into())),
                 };
                 match *op {
                     "jmp" => processed.push(op![jmp line]),
@@ -139,7 +139,7 @@ pub fn parse_instructions<'a>(
                     "jmpnz" => processed.push(op![jmpnz line]),
                     "jmpns" => processed.push(op![jmpns line]),
                     "jmpnc" => processed.push(op![jmpnc line]),
-                    _ => return Err(ParsingError::InvalidInstruction),
+                    _ => return Err(ParsingError::UnexpectedToken),
                 }
             }
             RawInstruction::Reg2 { op, z, x } => match (*op, z.parse::<u8>(), x.parse::<u8>()) {
@@ -152,7 +152,7 @@ pub fn parse_instructions<'a>(
                 ("ashr", Ok(z), Ok(x)) => processed.push(op![ashr z, x]),
                 ("ld", Ok(z), Ok(y)) => processed.push(op![ld z, y]),
                 ("st", Ok(z), Ok(x)) => processed.push(op![st z, x]),
-                _ => return Err(ParsingError::InvalidInstruction),
+                _ => return Err(ParsingError::UnexpectedToken),
             },
             RawInstruction::Reg3 { op, z, x, y } => {
                 match (*op, z.parse::<u8>(), x.parse::<u8>(), y.parse::<u8>()) {
@@ -160,7 +160,7 @@ pub fn parse_instructions<'a>(
                     ("sub", Ok(z), Ok(x), Ok(y)) => processed.push(op![sub z, x, y]),
                     ("and", Ok(z), Ok(x), Ok(y)) => processed.push(op![and z, x, y]),
                     ("or", Ok(z), Ok(x), Ok(y)) => processed.push(op![or z, x, y]),
-                    _ => return Err(ParsingError::InvalidInstruction),
+                    _ => return Err(ParsingError::UnexpectedToken),
                 }
             }
         }
