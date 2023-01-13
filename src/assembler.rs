@@ -1,4 +1,5 @@
 #![feature(unchecked_math)]
+#![allow(dead_code)]
 
 mod asm;
 mod instructions;
@@ -9,9 +10,8 @@ mod processor;
 extern crate pest_derive;
 
 fn main() {
-    let path;
-    match std::env::args().nth(1) {
-        Some(p) => path = p,
+    let path = match std::env::args().nth(1) {
+        Some(p) => p,
         None => return,
     };
 
@@ -22,7 +22,6 @@ fn main() {
         }
         Err(e) => {
             println!("{e}");
-            return;
         }
     }
 }

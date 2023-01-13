@@ -4,7 +4,7 @@ use std::fmt::Display;
 #[derive(Debug)]
 pub enum ParsingError {
     Filesystem(std::io::Error),
-    Pest(pest::error::Error<Rule>),
+    Pest(Box<pest::error::Error<Rule>>),
     UndefinedLabel(String),
     RedefinedLabel(String),
     NumberConversion(String),
@@ -23,7 +23,7 @@ impl From<std::io::Error> for ParsingError {
 
 impl From<pest::error::Error<Rule>> for ParsingError {
     fn from(e: pest::error::Error<Rule>) -> Self {
-        Self::Pest(e)
+        Self::Pest(Box::new(e))
     }
 }
 

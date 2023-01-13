@@ -51,7 +51,7 @@ fn load_cpu(
 }
 
 pub fn load_from_file(proc: &mut Processor, path: &str) -> bool {
-    match parser::parse_file(&path) {
+    match parser::parse_file(path) {
         Ok((rom, ram, labels)) => load_cpu(proc, Some(&rom), Some(&ram), Some(labels)),
         Err(e) => {
             println!("{e}");
@@ -85,7 +85,7 @@ fn print_help() {
 }
 
 fn main() {
-    let mut p = Processor::new();
+    let mut p = Processor::default();
 
     match std::env::args().nth(1) {
         Some(path) => {
@@ -94,7 +94,7 @@ fn main() {
             }
         }
         None => {
-            if !load_cpu(&mut p, Some(&asm::ROM_ASM), Some(&asm::DATA_MEMORY), None) {
+            if !load_cpu(&mut p, Some(asm::ROM_ASM), Some(asm::DATA_MEMORY), None) {
                 return;
             }
         }

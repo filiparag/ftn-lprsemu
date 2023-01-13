@@ -29,10 +29,9 @@ fn parse_number(pair: Pair<'_, Rule>) -> Result<u16, ParsingError> {
 
 pub fn parse_data(pair: Pair<'_, Rule>) -> Result<u16, ParsingError> {
     if let Some(data) = pair.into_inner().next() {
-        let mut data = data.into_inner();
         let mut negative = false;
         let mut number = None;
-        while let Some(value) = data.next() {
+        for value in data.into_inner() {
             match value.as_rule() {
                 Rule::negative => negative = true,
                 Rule::number => number = Some(parse_number(value)?),
@@ -46,5 +45,5 @@ pub fn parse_data(pair: Pair<'_, Rule>) -> Result<u16, ParsingError> {
             _ => {}
         }
     }
-    return Err(ParsingError::UnexpectedToken);
+    Err(ParsingError::UnexpectedToken)
 }

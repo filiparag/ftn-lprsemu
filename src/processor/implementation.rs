@@ -33,9 +33,15 @@ macro_rules! mem {
     };
 }
 
+impl Default for Processor {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl Processor {
     #[allow(dead_code)]
-    pub fn new() -> Self {
+    fn new() -> Self {
         Processor {
             rom: [Instruction::default(); ROM_SIZE],
             ram: [0; RAM_SIZE],
