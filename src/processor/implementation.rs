@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use super::EmulationError;
 use super::{DisplayRadix, DisplaySigned, FlagRegisters, Processor, RAM_SIZE, REG_COUNT, ROM_SIZE};
-use crate::instructions::Instruction;
+use crate::instructions::{Instruction, RegisterBoundCheck};
 
 mod alu;
 mod control_flow;
@@ -195,5 +195,14 @@ impl Processor {
                     }
                 })
                 .count()
+    }
+
+    pub fn check(&self) -> Result<(), Instruction> {
+        for ins in self.rom {
+            if !ins.reg_bound_check() {
+                return Err(ins);
+            }
+        }
+        Ok(())
     }
 }

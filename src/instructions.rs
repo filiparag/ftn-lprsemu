@@ -3,6 +3,8 @@ mod from_str;
 mod implementation;
 mod r#macro;
 
+pub use implementation::RegisterBoundCheck;
+
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub enum AluInstruction {
     Move(u8, u8),
