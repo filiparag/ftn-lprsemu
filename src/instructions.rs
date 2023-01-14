@@ -2,8 +2,10 @@ mod display;
 mod from_str;
 mod implementation;
 mod r#macro;
+mod to_vhdl;
 
 pub use implementation::RegisterBoundCheck;
+pub use to_vhdl::ToVhdl;
 
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub enum AluInstruction {
