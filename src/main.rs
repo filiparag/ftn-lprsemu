@@ -23,12 +23,8 @@ fn prompt(separator: &str) -> Option<Vec<String>> {
 }
 
 fn print_help() {
-    println!(
-        "{} {} - {}",
-        env!("CARGO_PKG_NAME"),
-        env!("CARGO_PKG_VERSION"),
-        env!("CARGO_PKG_DESCRIPTION")
-    );
+    println!("{} {}", env!("CARGO_BIN_NAME"), env!("CARGO_PKG_VERSION"),);
+    println!("{}", env!("CARGO_PKG_DESCRIPTION"));
     println!("{}", env!("CARGO_PKG_AUTHORS"));
     println!();
     println!("Usage:");

@@ -25,6 +25,7 @@ macro_rules! concat {
 
 fn parse_rom(rom: &[Instruction]) -> Vec<u8> {
     let mut vhdl = Vec::new();
+    concat!(vhdl <= "-- instr_rom.vhd";);
     concat!(vhdl <= "architecture Behavioral of instr_rom is";);
     concat!(vhdl <= "begin";);
     for (a, ins) in rom.iter().enumerate() {
@@ -42,16 +43,26 @@ fn parse_rom(rom: &[Instruction]) -> Vec<u8> {
 
 fn parse_ram(ram: &[u16]) -> Vec<u8> {
     let mut vhdl = Vec::new();
+    concat!(vhdl <= "-- data_ram.vhd";);
     for (index, value) in ram.iter().enumerate() {
         concat!(vhdl <= "sMEM({index}) <= x\"{value:04x}\";";)
     }
     vhdl
 }
 
+fn print_help() {
+    println!("{} {}", env!("CARGO_BIN_NAME"), env!("CARGO_PKG_VERSION"),);
+    println!("{}", env!("CARGO_PKG_DESCRIPTION"));
+    println!("{}", env!("CARGO_PKG_AUTHORS"));
+}
+
 fn main() {
     let path = match std::env::args().nth(1) {
         Some(p) => p,
-        None => return,
+        None => {
+            print_help();
+            return;
+        }
     };
 
     #[allow(unused)]
