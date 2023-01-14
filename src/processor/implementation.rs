@@ -109,6 +109,7 @@ impl Processor {
         self.registers = [0; REG_COUNT];
         self.flags = FlagRegisters::default();
         self.program_counter = 0;
+        self.runtime_counter = 0;
     }
 
     #[allow(dead_code)]
@@ -148,7 +149,7 @@ impl Processor {
     }
 
     #[allow(dead_code)]
-    pub fn run(&mut self, breakpoints: bool) -> Result<usize, EmulationError> {
+    pub fn run(&mut self, breakpoints: bool, count: Option<isize>) -> Result<usize, EmulationError> {
         let instruction_count = self.runtime_counter;
         let end = if let Instruction::NoOperation = self.rom[self.last_instruction_address()] {
             if self.last_instruction_address() == 0 {
@@ -158,8 +159,21 @@ impl Processor {
         } else {
             self.last_instruction_address()
         };
-
-        while self.program_counter <= end {
+        let runtime_end = match count {
+            Some(v) => if v >= 0 {
+                self.runtime_counter + v as usize
+            } else {
+                let count= if self.runtime_counter > 0 {
+                    self.runtime_counter as isize + v
+                } else {
+                    0
+                };
+                self.reset();
+                count as usize
+            },
+            None => usize::MAX
+        };
+        while self.program_counter <= end && self.runtime_counter < runtime_end {
             if !self.tick()? {
                 return Err(EmulationError::StackOverflow);
             };

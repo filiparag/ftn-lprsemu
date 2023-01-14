@@ -76,6 +76,7 @@ fn print_help() {
     println!("  r  | run               Run until next breakpoint");
     println!("  ra | run-all           Run to the end");
     println!("  s  | step              Execute one instruction");
+    println!("  u  | undo              Undo last instruction");
     println!("  b  | breakpoint <line> Toggle breakpoint on line");
     println!("  bc | breakpoint-clear  Remove all breakpoints");
     println!("  j  | jump <line>       Set program counter to line");
@@ -134,14 +135,14 @@ fn main() {
                     println!("{p}");
                 }
                 "r" | "run" => {
-                    if let Err(e) = p.run(true) {
+                    if let Err(e) = p.run(true, None) {
                         println!("Emulation error: {e:?}")
                     } else {
                         println!("{p}");
                     }
                 }
                 "ra" | "run-all" => {
-                    if let Err(e) = p.run(false) {
+                    if let Err(e) = p.run(false, None) {
                         println!("Emulation error: {e:?}")
                     } else {
                         println!("{p}");
@@ -149,6 +150,13 @@ fn main() {
                 }
                 "s" | "step" | "" => {
                     if let Err(e) = p.tick() {
+                        println!("Emulation error: {e:?}")
+                    } else {
+                        println!("{p}");
+                    }
+                }
+                "u" | "undo" => {
+                    if let Err(e) = p.run(false, Some(-1)) {
                         println!("Emulation error: {e:?}")
                     } else {
                         println!("{p}");
@@ -184,7 +192,7 @@ fn main() {
                     p.load_rom(asm::BENCHMARK);
                     p.reset();
                     let stopwatch = std::time::Instant::now();
-                    match p.run(false) {
+                    match p.run(false, None) {
                         Ok(ticks) => println!(
                             "Emulation speed: {:.2} MIPS",
                             ticks as f64 / stopwatch.elapsed().as_secs_f64() / 1e6
