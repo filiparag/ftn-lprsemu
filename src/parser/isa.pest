@@ -1,5 +1,9 @@
 WHITESPACE = _{ " " | "\t" }
-COMMENT = _{ ("//" | "#" | ";")+ ~ (!NEWLINE ~ ANY)* }
+COMMENT = _{ ((
+        "//" | "#" | ";")+ ~ (!NEWLINE ~ ANY)*
+    ) | (
+        "/*" ~ (!"*/" ~ ANY)* ~ "*/"
+) }
 
 character = @{ ASCII_ALPHANUMERIC | "_" }
 word = @{ character+ }
