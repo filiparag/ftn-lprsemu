@@ -10,7 +10,7 @@ fn parse_radix(pair: Pair<'_, Rule>) -> Result<u16, ParsingError> {
         "0b" => 2,
         _ => return Err(ParsingError::UnexpectedToken),
     };
-    let value = data.trim_start_matches("0x");
+    let value = data.trim_start_matches(&data[0..=1]);
     if let Ok(result) = u16::from_str_radix(value, radix) {
         Ok(result)
     } else {
