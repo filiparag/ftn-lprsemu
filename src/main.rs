@@ -1,8 +1,5 @@
 #![feature(unchecked_math)]
 
-use std::collections::HashMap;
-
-use instructions::Instruction;
 use processor::Processor;
 
 #[macro_use]
@@ -10,6 +7,7 @@ extern crate pest_derive;
 
 mod asm;
 mod instructions;
+mod load;
 mod parser;
 mod processor;
 
@@ -21,42 +19,6 @@ fn prompt(separator: &str) -> Option<Vec<String>> {
     match std::io::stdin().read_line(&mut line) {
         Ok(_) => Some(line.trim().split(' ').map(str::to_string).collect()),
         Err(_) => None,
-    }
-}
-
-fn load_cpu(
-    proc: &mut Processor,
-    rom: Option<&[Instruction]>,
-    ram: Option<&[u16]>,
-    labels: Option<HashMap<usize, Vec<String>>>,
-) -> bool {
-    if let Some(rom) = rom {
-        proc.load_rom(rom);
-        proc.clear_breakpoints();
-        proc.reset();
-    }
-    if let Some(ram) = ram {
-        proc.load_ram(ram);
-    }
-    if let Some(labels) = labels {
-        proc.load_labels(labels);
-    }
-    match proc.check() {
-        Ok(_) => true,
-        Err(ins) => {
-            println!("Loading error: Instruction '{ins}' is not valid");
-            false
-        }
-    }
-}
-
-pub fn load_from_file(proc: &mut Processor, path: &str) -> bool {
-    match parser::parse_file(path) {
-        Ok((rom, ram, labels)) => load_cpu(proc, Some(&rom), Some(&ram), Some(labels)),
-        Err(e) => {
-            println!("{e}");
-            false
-        }
     }
 }
 
@@ -90,12 +52,12 @@ fn main() {
 
     match std::env::args().nth(1) {
         Some(path) => {
-            if !load_from_file(&mut p, &path) {
+            if !load::load_from_file(&mut p, &path) {
                 return;
             }
         }
         None => {
-            if !load_cpu(&mut p, Some(asm::ROM_ASM), Some(asm::DATA_MEMORY), None) {
+            if !load::load_cpu(&mut p, Some(asm::ROM_ASM), Some(asm::DATA_MEMORY), None) {
                 return;
             }
         }
@@ -112,16 +74,16 @@ fn main() {
                 "p" | "print" => println!("{p}"),
                 "l" | "load" => {
                     if input.len() != 2 {
-                        println!("Argument error");
+                        eprintln!("Argument error");
                         continue;
                     }
-                    if load_from_file(&mut p, input[1].as_str()) {
+                    if load::load_from_file(&mut p, input[1].as_str()) {
                         println!("{p}");
                     }
                 }
                 "d" | "radix" => {
                     if input.len() != 2 {
-                        println!("Argument error");
+                        eprintln!("Argument error");
                         continue;
                     }
                     use processor::{DisplayRadix, DisplaySigned};
@@ -136,35 +98,35 @@ fn main() {
                 }
                 "r" | "run" => {
                     if let Err(e) = p.run(true, None) {
-                        println!("Emulation error: {e:?}")
+                        eprintln!("Emulation error: {e:?}")
                     } else {
                         println!("{p}");
                     }
                 }
                 "ra" | "run-all" => {
                     if let Err(e) = p.run(false, None) {
-                        println!("Emulation error: {e:?}")
+                        eprintln!("Emulation error: {e:?}")
                     } else {
                         println!("{p}");
                     }
                 }
                 "s" | "step" | "" => {
                     if let Err(e) = p.tick() {
-                        println!("Emulation error: {e:?}")
+                        eprintln!("Emulation error: {e:?}")
                     } else {
                         println!("{p}");
                     }
                 }
                 "u" | "undo" => {
                     if let Err(e) = p.run(false, Some(-1)) {
-                        println!("Emulation error: {e:?}")
+                        eprintln!("Emulation error: {e:?}")
                     } else {
                         println!("{p}");
                     }
                 }
                 "b" | "breakpoint" => {
                     if input.len() != 2 {
-                        println!("Argument error");
+                        eprintln!("Argument error");
                         continue;
                     }
                     let line: usize = input[1].parse().expect("Line parsing error");
@@ -177,7 +139,7 @@ fn main() {
                 }
                 "j" | "jump" => {
                     if input.len() != 2 {
-                        println!("Argument error");
+                        eprintln!("Argument error");
                         continue;
                     }
                     let line: usize = input[1].parse().expect("Line parsing error");
@@ -197,14 +159,14 @@ fn main() {
                             "Emulation speed: {:.2} MIPS",
                             ticks as f64 / stopwatch.elapsed().as_secs_f64() / 1e6
                         ),
-                        Err(e) => println!("Emulation error: {e:?}"),
+                        Err(e) => eprintln!("Emulation error: {e:?}"),
                     }
                 }
                 "h" | "help" => print_help(),
-                _ => println!("Command error"),
+                _ => eprintln!("Command error"),
             }
         } else {
-            println!("Input error");
+            eprintln!("Input error");
         }
     }
 }
