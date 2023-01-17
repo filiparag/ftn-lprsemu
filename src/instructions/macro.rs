@@ -30,6 +30,9 @@ macro_rules! op {
     (or $z:tt, $x:tt, $y:tt) => {
         $crate::op![alu LogicalOr $z, $x, $y]
     };
+    (not $z:tt, $x:tt) => {
+        $crate::op![alu LogicalNot $z, $x]
+    };
     (inc $z:tt, $x:tt) => {
         $crate::op![alu Increment $z, $x]
     };

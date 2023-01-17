@@ -16,7 +16,7 @@ register = { "R" ~ number }
 section = { "." ~ word }
 label = { word ~ ":" }
 
-op_2r = { "mov" | "inc" | "dec" | "shl" | "shr" | "ashl" | "ashr" | "ld" | "st" }
+op_2r = { "mov" | "inc" | "dec" | "shl" | "shr" | "ashl" | "ashr" | "not" | "ld" | "st" }
 op_3r = { "add" | "sub" | "and" | "or" }
 op_l = { "jmpz" | "jmps" | "jmpc" | "jmpnz" | "jmpns" | "jmpnc" | "jmp" }
 
@@ -34,8 +34,11 @@ instruction = { instr_2r | instr_3r | instr_l }
 signed = { negative? ~ (radix | number) }
 data = { signed ~ sep? }
 
+line = { section | label | instruction | data+ }
+
 file = {
     SOI ~
-    ((section | label | instruction | data+)? ~ NEWLINE)* ~
+    (line? ~ NEWLINE)* ~
+    line? ~
     EOI
 }

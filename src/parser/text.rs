@@ -150,6 +150,7 @@ pub fn parse_instructions<'a>(
                 ("shr", Ok(z), Ok(x)) => processed.push(op![shr z, x]),
                 ("ashl", Ok(z), Ok(x)) => processed.push(op![ashl z, x]),
                 ("ashr", Ok(z), Ok(x)) => processed.push(op![ashr z, x]),
+                ("not", Ok(z), Ok(x)) => processed.push(op![not z, x]),
                 ("ld", Ok(z), Ok(y)) => processed.push(op![ld z, y]),
                 ("st", Ok(z), Ok(x)) => processed.push(op![st z, x]),
                 _ => return Err(ParsingError::UnexpectedToken),
