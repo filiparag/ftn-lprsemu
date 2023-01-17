@@ -59,10 +59,6 @@ pub fn parse_file(path: &str) -> Result<AsmFileData, ParsingError> {
     };
     let mut current_section: Option<ProgramSection> = None;
     for line in pairs.into_inner() {
-        let line = match line.into_inner().next() {
-            Some(pair) => pair,
-            None => continue,
-        };
         match line.as_rule() {
             Rule::section => {
                 if let Some(section) = line.into_inner().next() {

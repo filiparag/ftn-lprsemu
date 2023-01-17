@@ -38,7 +38,7 @@ line = { section | label | instruction | data+ }
 
 file = {
     SOI ~
-    (line? ~ NEWLINE)* ~
-    line? ~
+    ((section | label | instruction | data+)? ~ NEWLINE)* ~
+    (section | label | instruction | data+)? ~
     EOI
 }
