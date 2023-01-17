@@ -44,3 +44,5 @@ impl Display for ParsingError {
         )
     }
 }
+
+impl std::error::Error for ParsingError {}

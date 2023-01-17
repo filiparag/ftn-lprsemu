@@ -1,9 +1,11 @@
+mod error;
 pub mod flag_registers;
 pub mod implementation;
 
 use std::collections::HashMap;
 
 use crate::instructions::Instruction;
+pub use error::EmulationError;
 
 pub const ROM_SIZE: usize = 256;
 pub const RAM_SIZE: usize = 256;
@@ -40,13 +42,4 @@ pub struct Processor {
     breakpoints: [bool; ROM_SIZE],
     radix: DisplayRadix,
     labels: HashMap<usize, Vec<String>>,
-}
-
-#[derive(Clone, Copy, Debug)]
-pub enum EmulationError {
-    InvalidLength,
-    BinaryParsing,
-    InvalidInstruction,
-    OutOfRange,
-    StackOverflow,
 }
