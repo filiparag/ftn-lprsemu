@@ -1,12 +1,7 @@
 use crate::{asm, instructions::Instruction};
 
 #[allow(dead_code)]
-pub const ROM_BIN: [&str; 4] = [
-    "000000000000000",
-    "000000000000000",
-    "000000000000000",
-    "000000000000000",
-];
+pub const ROM_BIN: [&str; 0] = [];
 
 #[allow(dead_code)]
 pub const DATA_MEMORY: &[u16] = &[0, 5, 6];
