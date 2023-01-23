@@ -58,7 +58,6 @@ impl Processor {
                 Ok(())
             }
         };
-        self.flags.unset();
         res
     }
 }
