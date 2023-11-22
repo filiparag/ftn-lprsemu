@@ -1,4 +1,5 @@
 #![feature(unchecked_math)]
+#![feature(unchecked_shifts)]
 
 use processor::Processor;
 

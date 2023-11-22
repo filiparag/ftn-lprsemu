@@ -5,6 +5,7 @@ mod r#macro;
 mod to_vhdl;
 
 pub use implementation::RegisterBoundCheck;
+#[allow(unused_imports)]
 pub use to_vhdl::ToVhdl;
 
 #[derive(Clone, Copy, Debug, PartialEq)]
