@@ -1,0 +1,10 @@
+Package: lprsemu
+Version: 0.4.2
+Maintainer: Filip Parag <filip@parag.rs>
+Description: Emulator, debugger and assembler for LPRS1 ISA & CPU
+Section: devel
+Vcs-Git: git://github.com/filiparag/ftn-lprsemu.git
+Homepage: https://github.com/filiparag/ftn-lprsemu
+Architecture: amd64
+Installed-Size: 420
+Priority: optional

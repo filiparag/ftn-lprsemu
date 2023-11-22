@@ -1,0 +1,22 @@
+# Maintainer: Filip Parag <filip@parag.rs>
+
+pkgname=lprsemu-bin
+pkgver=0.4.2
+pkgrel=1
+pkgdesc='Emulator, debugger and assembler for LPRS1 ISA & CPU'
+arch=('x86_64')
+url='https://github.com/filiparag/ftn-lprsemu'
+license=('MIT')
+source=(
+    "lprsasm-${pkgver}::${url}/releases/download/${pkgver}/lprsasm-${pkgver}-gnu_linux-x86_64"
+    "lprsemu-${pkgver}::${url}/releases/download/${pkgver}/lprsemu-${pkgver}-gnu_linux-x86_64"
+)
+sha256sums=(
+    '2e156b6bf2d887c4bdb1b7f055d741ce1af728f16dbb4779838453dec7a1d327'
+    'a2919c6a019d0afe3af372d9bf49ed96d47ea9362058eefee421525c430ad2e2'
+)
+
+package() {
+  install -Dm 775 "./lprsasm-${pkgver}" "${pkgdir}/usr/bin/lprsasm"
+  install -Dm 775 "./lprsemu-${pkgver}" "${pkgdir}/usr/bin/lprsemu"
+}
