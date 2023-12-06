@@ -16,7 +16,7 @@ use ieee.numeric_std.all;
 entity data_ram is
 	port (
 		iCLK : in std_logic;
-		inRST : in std_logic;
+		iRST : in std_logic;
 		iA : in std_logic_vector(7 downto 0);
 		iD : in std_logic_vector(15 downto 0);
 		iWE : in std_logic;
@@ -32,8 +32,8 @@ architecture arch of data_ram is
 
 begin
 
-	process (iCLK, inRST)begin
-		if inRST = '0' then
+	process (iCLK, iRST)begin
+		if iRST = '1' then
 			for i in 0 to 255 loop
 				rMEM(i) <= sMEM(i);
 			end loop;
