@@ -1,5 +1,7 @@
 use crate::instructions::{AluInstruction, ControlFlowInstruction, Instruction, MemoryInstruction};
 
+const EMPTY_REG: u8 = 0;
+
 pub trait ToVhdl {
     fn to_vhdl(&self) -> String;
 }
@@ -18,18 +20,18 @@ impl ToVhdl for Instruction {
 impl ToVhdl for AluInstruction {
     fn to_vhdl(&self) -> String {
         match *self {
-            Self::Move(r1, r2) => format!("000000{}", encode_registers(r1, r2, 0)),
-            Self::Add(r1, r2, r3) => format!("000001{}", encode_registers(r1, r2, r3)),
-            Self::Subtract(r1, r2, r3) => format!("000010{}", encode_registers(r1, r2, r3)),
-            Self::LogicalAnd(r1, r2, r3) => format!("000011{}", encode_registers(r1, r2, r3)),
-            Self::LogicalOr(r1, r2, r3) => format!("000100{}", encode_registers(r1, r2, r3)),
-            Self::LogicalNot(r1, r2) => format!("000101{}", encode_registers(r1, r2, 0)),
-            Self::Increment(r1, r2) => format!("000110{}", encode_registers(r1, r2, 0)),
-            Self::Decrement(r1, r2) => format!("000111{}", encode_registers(r1, r2, 0)),
-            Self::LShiftLeft(r1, r2) => format!("001000{}", encode_registers(r1, r2, 0)),
-            Self::LShiftRight(r1, r2) => format!("001001{}", encode_registers(r1, r2, 0)),
-            Self::AShiftLeft(r1, r2) => format!("001010{}", encode_registers(r1, r2, 0)),
-            Self::AShiftRight(r1, r2) => format!("001011{}", encode_registers(r1, r2, 0)),
+            Self::Move(rz, rx) => format!("000000{}", encode_registers(rz, rx, EMPTY_REG)),
+            Self::Add(rz, rx, ry) => format!("000001{}", encode_registers(rz, rx, ry)),
+            Self::Subtract(rz, rx, ry) => format!("000010{}", encode_registers(rz, rx, ry)),
+            Self::LogicalAnd(rz, rx, ry) => format!("000011{}", encode_registers(rz, rx, ry)),
+            Self::LogicalOr(rz, rx, ry) => format!("000100{}", encode_registers(rz, rx, ry)),
+            Self::LogicalNot(rz, rx) => format!("000101{}", encode_registers(rz, rx, EMPTY_REG)),
+            Self::Increment(rz, rx) => format!("000110{}", encode_registers(rz, rx, EMPTY_REG)),
+            Self::Decrement(rz, rx) => format!("000111{}", encode_registers(rz, rx, EMPTY_REG)),
+            Self::LShiftLeft(rz, rx) => format!("001000{}", encode_registers(rz, rx, EMPTY_REG)),
+            Self::LShiftRight(rz, rx) => format!("001001{}", encode_registers(rz, rx, EMPTY_REG)),
+            Self::AShiftLeft(rz, rx) => format!("001010{}", encode_registers(rz, rx, EMPTY_REG)),
+            Self::AShiftRight(rz, rx) => format!("001011{}", encode_registers(rz, rx, EMPTY_REG)),
         }
     }
 }
@@ -37,8 +39,8 @@ impl ToVhdl for AluInstruction {
 impl ToVhdl for MemoryInstruction {
     fn to_vhdl(&self) -> String {
         match *self {
-            Self::Load(r1, r2) => format!("100000{}", encode_registers(r1, r2, 0)),
-            Self::Store(r1, r2) => format!("110000{}", encode_registers(r1, r2, 0)),
+            Self::Load(rz, ry) => format!("100000{}", encode_registers(rz, EMPTY_REG, ry)),
+            Self::Store(rx, ry) => format!("110000{}", encode_registers(rx, ry, EMPTY_REG)),
         }
     }
 }
@@ -64,4 +66,3 @@ fn encode_registers(r1: u8, r2: u8, r3: u8) -> String {
 fn encode_address(a: u16) -> String {
     format!("{a:09b}")
 }
-

@@ -9,7 +9,7 @@ impl Processor {
         &mut self,
         op: ControlFlowInstruction,
     ) -> Result<(), EmulationError> {
-        let res = match op {
+        match op {
             ControlFlowInstruction::Jump(addr) => {
                 in_range![RAM_SIZE; addr];
                 self.program_counter = addr as usize;
@@ -57,7 +57,6 @@ impl Processor {
                 }
                 Ok(())
             }
-        };
-        res
+        }
     }
 }
