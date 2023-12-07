@@ -40,7 +40,7 @@ impl ToVhdl for MemoryInstruction {
     fn to_vhdl(&self) -> String {
         match *self {
             Self::Load(rz, ry) => format!("100000{}", encode_registers(rz, EMPTY_REG, ry)),
-            Self::Store(rx, ry) => format!("110000{}", encode_registers(rx, ry, EMPTY_REG)),
+            Self::Store(rx, ry) => format!("110000{}", encode_registers(EMPTY_REG, rx, ry)),
         }
     }
 }
