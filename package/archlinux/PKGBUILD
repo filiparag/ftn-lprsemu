@@ -1,8 +1,8 @@
 # Maintainer: Filip Parag <filip@parag.rs>
 
 pkgname=lprsemu-bin
-pkgver=0.4.2
-pkgrel=1
+pkgver=0.4.4
+pkgrel=2
 pkgdesc='Emulator, debugger and assembler for LPRS1 ISA & CPU'
 arch=('x86_64')
 url='https://github.com/filiparag/ftn-lprsemu'
@@ -12,8 +12,8 @@ source=(
     "lprsemu-${pkgver}::${url}/releases/download/${pkgver}/lprsemu-${pkgver}-gnu_linux-x86_64"
 )
 sha256sums=(
-    '2e156b6bf2d887c4bdb1b7f055d741ce1af728f16dbb4779838453dec7a1d327'
-    'a2919c6a019d0afe3af372d9bf49ed96d47ea9362058eefee421525c430ad2e2'
+    '64046070849d4ac6e42a3df61fb44f69b400d87fa2f5f30de6c8a8ac934b11f3'
+    '28719df79cefa51637f6e99e419e1ddfa182cab599d3503f9c30f3625b3a44ca'
 )
 
 package() {

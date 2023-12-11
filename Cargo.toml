@@ -33,3 +33,5 @@ pest_derive = "2.7.5"
 
 [profile.release]
 strip = true
+lto = true
+

@@ -1,5 +1,5 @@
 Package: lprsemu
-Version: 0.4.2
+Version: 0.4.4
 Maintainer: Filip Parag <filip@parag.rs>
 Description: Emulator, debugger and assembler for LPRS1 ISA & CPU
 Section: devel
